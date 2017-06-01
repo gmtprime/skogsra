@@ -40,7 +40,7 @@ defmodule Skogsra.Mixfile do
 
   defp package do
     [maintainers: ["Alexander de Sousa"],
-     licences: ["MIT"],
+     licenses: ["MIT"],
      links: %{"Github" => "https://github.com/gmtprime/skogsra"}]
   end
 end
