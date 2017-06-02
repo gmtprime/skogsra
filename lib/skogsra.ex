@@ -71,7 +71,7 @@ defmodule Skogsra do
   The available options are:
 
     - `:static` - Whether the computation of the OS environment variable is
-    done on compiling time or not. By default its value is `true`.
+    done on compiling time or not. By default its value is `false`.
     - `:default` - Default value in case the OS environment variable doesn't
     exist. By default is `nil`.
     - `:type` - The type of the OS environment variable. By default is the type
@@ -86,7 +86,6 @@ defmodule Skogsra do
     use Skogsra
 
     system_env :foo,
-      static: false,
       default: 42,
       type: :integer
   end
@@ -97,7 +96,7 @@ defmodule Skogsra do
   defaults to `42`.
   """
   defmacro system_env(name, opts \\ []) do
-    if Keyword.get(opts, :static, true) do
+    if Keyword.get(opts, :static, false) do
       Skogsra.static_system_env(name, opts)
     else
       Skogsra.runtime_system_env(name, opts)
@@ -115,7 +114,7 @@ defmodule Skogsra do
 
     - `:static` - Whether the computation of the OS environment variable or
     application configuration option is done on compiling time or not. By
-    default its value is `true`.
+    default its value is `false`.
     - `:default` - Default value in case the OS environment variable and the
     application configuration option don't exist. By default is `nil`.
     - `:type` - The type of the OS environment variable. By default is the type
@@ -137,7 +136,6 @@ defmodule Skogsra do
     use Skogsra
 
     app_env :foo, :my_app, :foo,
-      static: false,
       default: 42,
       type: :integer,
       domain: MyApp.Domain
@@ -176,7 +174,7 @@ defmodule Skogsra do
   ```
   """
   defmacro app_env(name, app, key, opts \\ []) do
-    if Keyword.get(opts, :static, true) do
+    if Keyword.get(opts, :static, false) do
       Skogsra.static_app_env(name, app, key, opts)
     else
       Skogsra.runtime_app_env(name, app, key, opts)

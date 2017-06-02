@@ -5,36 +5,32 @@ defmodule SkogsraTest do
     use Skogsra
 
     system_env :skogsra_static_var,
+      static: true,
       default: "default"
 
     system_env :skogsra_dynamic_var,
-      static: false,
       default: "default"
 
     system_env :skogsra_explicit_type,
-      static: false,
       type: :integer,
       default: "42"
 
     system_env :skogsra_implicit_type,
-      static: false,
       default: 42
 
     app_env :skogsra_app_static_var, :skogsra, :app_static_var,
+      static: true,
       default: "default"
 
     app_env :skogsra_app_dynamic_var, :skogsra, :app_dynamic_var,
-      static: false,
       default: "default"
 
-      app_env :skogsra_app_explicit_type, :skogsra, :app_explicit_type,
-        static: false,
-        type: :integer,
-        default: "42"
+    app_env :skogsra_app_explicit_type, :skogsra, :app_explicit_type,
+      type: :integer,
+      default: "42"
 
-      app_env :skogsra_app_implicit_type, :skogsra, :app_implicit_type,
-        static: false,
-        default: 42
+    app_env :skogsra_app_implicit_type, :skogsra, :app_implicit_type,
+      default: 42
   end
 
   test "system_env static" do
