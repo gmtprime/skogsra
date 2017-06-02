@@ -1,5 +1,7 @@
 # Skogsra
 
+[![Build Status](https://travis-ci.org/gmtprime/skogsra.svg?branch=master)](https://travis-ci.org/gmtprime/skogsra) [![Hex pm](http://img.shields.io/hexpm/v/skogsra.svg?style=flat)](https://hex.pm/packages/skogsra) [![hex.pm downloads](https://img.shields.io/hexpm/dt/skogsra.svg?style=flat)](https://hex.pm/packages/skogsra) [![Deps Status](https://beta.hexfaktor.org/badge/all/github/gmtprime/skogsra.svg)](https://beta.hexfaktor.org/github/gmtprime/skogsra) [![Inline docs](http://inch-ci.org/github/gmtprime/skogsra.svg?branch=master)](http://inch-ci.org/github/gmtprime/skogsra)
+
 > The _Skogsrå_ was a mythical creature of the forest that appears in the form
 > of a small, beautiful woman with a seemingly friendly temperament. However,
 > those who are enticed into following her into the forest are never seen
@@ -47,12 +49,21 @@ Or from a module:
 
 ```elixir
 defmodule MyApp do
-  @port Skogsra.get_app_env "POSTGRES_PORT", :my_app, :port,
+  @port Skogsra.get_app_env :my_app, :port,
     domain: MyApp.Repo,
-    default: 5432
+    default: 5432,
+    name: "POSTGRES_PORT"
+
+  @pool_size Skogsra.get_app_env :my_app, :pool_size,
+    domain: [MyApp.Pool, :pool_options],
+    default: 5
+    name: "POOL_SIZE"
 
   @spec get_port() :: integer()
   def get_port, do: @port
+
+  @spec get_pool_size() :: integer()
+  def get_pool_size, do: @pool_size
 end
 ```
 

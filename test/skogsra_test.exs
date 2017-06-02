@@ -126,22 +126,32 @@ defmodule SkogsraTest do
   end
 
   test "get_app_env" do
-    opts = [default: "42", domain: Skogsra.Domain, type: :integer]
-    assert Skogsra.get_app_env("SKOGSRA_GET_APP_ENV", :skogsra, :key, opts) == 42
+    opts = [default: "42", domain: Skogsra.Domain, type: :integer, name: "SKOGSRA_GET_APP_ENV"]
+    assert Skogsra.get_app_env(:skogsra, :key, opts) == 42
 
     Application.put_env(:skogsra, Skogsra.Domain, [key: "41"])
-    assert Skogsra.get_app_env("SKOGSRA_GET_APP_ENV", :skogsra, :key, opts) == 41
+    assert Skogsra.get_app_env(:skogsra, :key, opts) == 41
     Application.delete_env(:skogsra, Skogsra)
 
-    opts = [default: "42", type: :integer]
+    opts = [default: "42", type: :integer, name: "SKOGSRA_GET_APP_ENV"]
 
     Application.put_env(:skogsra, :key, "40")
-    assert Skogsra.get_app_env("SKOGSRA_GET_APP_ENV", :skogsra, :key, opts) == 40
+    assert Skogsra.get_app_env(:skogsra, :key, opts) == 40
     Application.delete_env(:skogsra, :key)
 
     System.put_env("SKOGSRA_GET_APP_ENV", "39")
-    assert Skogsra.get_app_env("SKOGSRA_GET_APP_ENV", :skogsra, :key, opts) == 39
+    assert Skogsra.get_app_env(:skogsra, :key, opts) == 39
     System.delete_env("SKOGSRA_GET_ENV_AS")
+  end
+
+  test "get_app_env nested domains" do
+    opts = [default: "42", domain: [Skogsra.Nested, :domain], type: :integer,
+            name: "SKOGSRA_GET_APP_ENV_NESTED_DOMAINS"]
+    assert Skogsra.get_app_env(:skogsra, :key, opts) == 42
+
+    Application.put_env(:skogsra, Skogsra.Nested, [domain: [key: "41"]])
+    assert Skogsra.get_app_env(:skogsra, :key, opts) == 41
+    Application.delete_env(:skogsra, Skogsra)
   end
 
   test "type?" do

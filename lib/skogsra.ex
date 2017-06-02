@@ -42,12 +42,21 @@ defmodule Skogsra do
 
   ```elixir
   defmodule MyApp do
-    @port Skogsra.get_app_env "POSTGRES_PORT", :my_app, :port,
+    @port Skogsra.get_app_env :my_app, :port,
       domain: MyApp.Repo,
-      default: 5432
+      default: 5432,
+      name: "POSTGRES_PORT"
+
+    @pool_size Skogsra.get_app_env :my_app, :pool_size,
+      domain: [MyApp.Pool, :pool_options],
+      default: 5
+      name: "POOL_SIZE"
 
     @spec get_port() :: integer()
     def get_port, do: @port
+
+    @spec get_pool_size() :: integer()
+    def get_pool_size, do: @pool_size
   end
   ```
   """
@@ -228,11 +237,13 @@ defmodule Skogsra do
   end
 
   @doc """
-  Gets the OS environment variable by its name. If it's not found, attempts to
-  get the application configuration option by the `app` name and the option
-  `key`. Optionally receives a `Keyword` list of `options`
+  Gets the OS environment variable by its name if present in the option
+  `:name`. If it's not found, attempts to get the application configuration
+  option by the `app` name and the option `key`. Optionally receives a
+  `Keyword` list of `options`
   
   i.e:
+    - `:name` - Name of the OS environment variable. By default is `""`.
     - `:default` - Default value in case the OS environment variable and the
     application configuration option don't exist. By default is `nil`.
     - `:type` - The type of the OS environment variable. By default is the type
@@ -246,21 +257,27 @@ defmodule Skogsra do
         hostname: "localhost",
         (...)
       ```
-    the domain would be `MyApp.Repo`. By default, there is no domain.
+    the domain would be `MyApp.Repo`. By default, there is no domain. If the
+    domain is a list of atoms forces the algorithm to go recursively in the
+    structure to find the key.
 
   e.g:
 
   ```elixir
   defmodule MyApp do
     def get_hostname do
-      get_app_env("POSTGRES_HOSTNAME", :my_app, :hostname, domain: MyApp.Repo)
+      get_app_env(:my_app, :hostname,
+        domain: MyApp.Repo,
+        name: "POSTGRES_HOSTNAME"
+      )
     end
   end
   ```
   """
-  @spec get_app_env(binary(), atom(), atom()) :: term()
-  @spec get_app_env(binary(), atom(), atom(), list()) :: term()
-  def get_app_env(name, app, key, options \\ []) when is_binary(name) do
+  @spec get_app_env(atom(), atom()) :: term()
+  @spec get_app_env(atom(), atom(), list()) :: term()
+  def get_app_env(app, key, options \\ []) do
+    name = Keyword.get(options, :name, "")
     default = Keyword.get(options, :default, nil)
     type = Keyword.get(options, :type, type?(default))
     with default = cast_default(default, type),
@@ -306,10 +323,9 @@ defmodule Skogsra do
     quote do
       def unquote(name)() do
         Skogsra.get_app_env(
-          unquote(env_name),
           unquote(app),
           unquote(key),
-          unquote(opts)
+          [{:name, unquote(env_name)} | unquote(opts)]
         )
       end
     end
@@ -318,7 +334,7 @@ defmodule Skogsra do
   @doc false
   def static_app_env(name, app, key, opts) do
     env_name = name |> Atom.to_string() |> String.upcase()
-    value = Skogsra.get_app_env(env_name, app, key, opts)
+    value = Skogsra.get_app_env(app, key, [{:name, env_name} | opts])
     quote do
       def unquote(name)(), do: unquote(value)
     end
@@ -329,19 +345,36 @@ defmodule Skogsra do
     value = Application.get_env(app, key, default)
     cast(value, type)
   end
-  def do_get_app_env(type, app, domain, key, default) do
+  def do_get_app_env(type, app, domain, key, default) when is_atom(domain) do
+    do_get_app_env(type, app, [domain], key, default)
+  end
+  def do_get_app_env(type, app, [domain | domains], key, default) do
     case Application.get_env(app, domain) do
       nil ->
-        default
+        {:ok, default}
       opts ->
-        value = Keyword.get(opts, key, default)
+        value = do_get_app_env(opts, domains, key, default)
         cast(value, type)
     end
   end
 
   @doc false
-  def do_get_env_as(type, var, default \\ nil) do
-    value = System.get_env(var)
+  def do_get_app_env(opts, [], key, default) do
+    Keyword.get(opts, key, default)
+  end
+  def do_get_app_env(opts, [domain | domains], key, default) do
+    case Keyword.get(opts, domain) do
+      nil -> default
+      new_opts -> do_get_app_env(new_opts, domains, key, default)
+    end
+  end
+
+  @doc false
+  def do_get_env_as(type, name, default \\ nil)
+
+  def do_get_env_as(_, "", default), do: {:ok, default}
+  def do_get_env_as(type, name, default) do
+    value = System.get_env(name)
     if is_nil(value), do: {:ok, default}, else: cast(value, type)
   end
 

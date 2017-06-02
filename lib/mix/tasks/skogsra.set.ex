@@ -6,7 +6,9 @@ defmodule Mix.Tasks.Skogsra.Set do
   use Mix.Task
 
   @shortdoc "Search for `.env` file and run them"
-
+  @doc """
+  Not implemented.
+  """
   def run(_) do
     IO.puts "Not implemented"
   end
