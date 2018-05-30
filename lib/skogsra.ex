@@ -1,63 +1,180 @@
 defmodule Skogsra do
   @moduledoc """
-  This library attempts to improve the use of OS environment variables and
-  application configuration. You would create a settings module e.g:
+
+  > The _Skogsrå_ was a mythical creature of the forest that appears in the form
+  > of a small, beautiful woman with a seemingly friendly temperament. However,
+  > those who are enticed into following her into the forest are never seen
+  > again.
+
+  This library attempts to improve the use of OS environment variables for
+  application configuration:
+
+    * Automatic type casting of values.
+    * Options documentation.
+    * Variables defaults.
+
+  ## Small Example
+
+  You would create a settings module and define the e.g:
 
   ```elixir
-  defmodule Settings do
+  defmodule MyApp.Settings do
     use Skogsra
 
-    # Rather equivalent to `System.get_env("POSTGRES_PORT") || 5432` (misses
-    # the automatic casting to integer). Generates the function
-    # `Settings.postgres_port/0`.
-    @spec portgres_port() :: integer()
-    system_env :postgres_port,
-      default: 5432
+    system_env :some_service_port,
+      default: 4000
 
-    # Equivalent to
-    # ```
-    # System.get_env("POSTGRES_HOSTNAME") ||
-    # (Application.get_env(:my_app, MyApp.Repo, []) |>
-    #  Keyword.get(:hostname, "localhost"))
-    # ```
-    # Generates the function Settings.postgres_hostname/0
-    @spec postgres_hostname() :: binary()
-    app_env :postgres_hostname, :my_app, :hostname,
-      domain: MyApp.Repo
+    app_env :some_service_hostname, :my_app, :hostname,
+      domain: MyApp.Repo,
       default: "localhost"
   end
   ```
 
-  It can be used in the configuration file as well e.g:
+  and you would use it in a module as follows:
 
-  ```elixir
-  config :my_app, MyApp.Repo,
-    adapter: Ecto.Adapters.Postgres,
-    hostname: Skogsra.get_env("POSTGRES_HOSTNAME", "localhost"),
-    port: Skogsra.get_env_as(:integer, "POSTGRES_PORT", "5432"),
+  ```
+  defmodule MyApp.SomeModule do
+    alias MyApp.Setting
+
     (...)
+
+    def connect do
+      hostname = Settings.some_service_hostname()
+      port = Settings.some_service_port()
+
+      SomeService.connect(hostname, port)
+    end
+
+    (...)
+  end
   ```
 
-  Or from a module:
+  ### Example Explanation
 
-  ```elixir
-  defmodule MyApp do
-    @port Skogsra.get_app_env :my_app, :port,
-      domain: MyApp.Repo,
-      default: 5432,
-      name: "POSTGRES_PORT"
+  The module `MyApp.Settings` will have two functions e.g:
 
-    @pool_size Skogsra.get_app_env :my_app, :pool_size,
-      domain: [MyApp.Pool, :pool_options],
-      default: 5
-      name: "POOL_SIZE"
+    * `some_service_port/0`: Returns the port as an integer. Calling this
+      function is roughly equivalent to the following code (without the automatic
+      type casting):
 
-    @spec get_port() :: integer()
-    def get_port, do: @port
+      ```
+      System.get_env("SOME_SERVICE_PORT") || 4000
+      ```
 
-    @spec get_pool_size() :: integer()
-    def get_pool_size, do: @pool_size
-  end
+    * `some_service_hostname/0`: Returns the hostname as a binary. Calling this
+      function is roughly equivalent to the following code (without the automatic
+      type casting):
+
+      ```
+      case System.get_env("SOME_SERVICE_HOSTNAME") do
+        nil ->
+          :my_app
+          |> Application.get_env(MyApp.Domain, [])
+          |> Keyword.get(:hostname, "localhost")
+        value ->
+          value
+      end
+      ```
+
+  Things to note:
+    1. The functions have the same name as the OS environment variable, but in
+      lower case.
+    2. The functions infer the type from the `default` value. If no default value
+      is provided, it will be casted as binary by default.
+    3. Both functions try to retrieve and cast the value of an OS environment
+      variable, but the one declared with `app_env` searches for `:my_app`
+      configuration if the OS environment variable is empty:
+
+      ```
+      config :my_app, MyApp.Domain,
+        hostname: "some_hostname"
+      ```
+
+  If the default value is not present, Skogsra cannot infer the type, unless the
+  type is set with the option `type`. The possible values for `type` are
+  `:integer`, `:float`, `:boolean`, `:atom` and `:binary`.
+
+  ## Recommended Usage
+
+  The recommended way of using this project is to define a `.env` file in the
+  root of your project with the variables that you want to define e.g:
+
+  ```
+  export SOME_SERVICE_PORT=1234
+  ```
+
+  and then when `source`ing the file right before you execute your application.
+  In `bash` (or `zsh`) would be like this:
+
+  ```
+  $ source .env
+  ```
+
+  The previous step can be automated by adding the following code to your
+  `~/.bashrc` (or `~/.zshrc`):
+
+  ```
+  #################
+  # BEGIN: Auto env
+
+  export LAST_ENV=
+
+  function auto_env_on_chpwd() {
+    env_type="$1"
+    env_file="$PWD/.env"
+    if [ -n "$env_type" ]
+    then
+      env_file="$PWD/.env.$env_type"
+      if [ ! -r "$env_file" ]
+      then
+        echo -e "\e[33mFile $env_file does not exist.\e[0m"
+        env_file="$PWD/.env"
+      fi
+    fi
+
+    if [ -r "$env_file" ]
+    then
+      if [ -z "$LAST_ENV" ] && [ -r "$LAST_ENV" ]
+      then
+        `cat $LAST_ENV | sed -e 's/^export \([0-9a-zA-Z\_]*\)=.*$/unset \1/'`
+        echo -e "\e[32mUnloaded ENV VARS defined in \"$LAST_ENV\"\e[0m"
+      fi
+      export LAST_ENV="$env_file"
+      source $LAST_ENV
+      echo -e "\e[32mLoaded \"$LAST_ENV\"\e[0m"
+    fi
+  }
+
+  chpwd_functions=(${chpwd_functions[@]} "auto_env_on_chpwd")
+
+  if [ -n "$TMUX" ]; then
+      auto_env_on_chpwd
+  fi
+
+  alias change_to='function _change_to() {auto_env_on_chpwd $1}; _change_to'
+
+  # END: Auto env
+  ###############
+  ```
+
+  The previous code will attempt to `source` any `.env` file every time you
+  change directory e.g:
+
+  ```
+  /home/alex $ cd my_app
+  Loaded "/home/alex/my_app/.env"
+
+  /home/alex/my_app $ echo "$SOME_SERVICE_PORT"
+  1234
+  ```
+
+  Additionally, the command `change_to <ENV>` is included. To keep your `prod`,
+  `dev` and `test` environment variables separated, just create a
+  `.env.${MIX_ENV}` in the root directory of your project. And when you want to
+  use the variables set in one of those files, just run the following:
+
+  ```
+  $ change_to dev # Will use `.env.dev` instead of `.env`
   ```
   """
   require Logger
@@ -76,7 +193,7 @@ defmodule Skogsra do
   optional `Keyword` list with `options` and generates a function with arity 0
   with the same name of the OS environment variable, but in lower case e.g.
   `"FOO"` would generate the function `foo/0`.
-  
+
   The available options are:
 
     - `:static` - Whether the computation of the OS environment variable is
@@ -118,7 +235,7 @@ defmodule Skogsra do
   `options` and generates a function with arity 0 with the same name of the OS
   environment variable, but in lower case e.g. `"FOO"` would generate the
   function `foo/0`.
-  
+
   The available options are:
 
     - `:static` - Whether the computation of the OS environment variable or
@@ -133,7 +250,6 @@ defmodule Skogsra do
     - `:domain` - The `key` to search in the configuration file e.g in:
       ```elixir
       config :my_app, MyApp.Repo,
-        adapter: Ecto.Adapters.Postgres,
         (...)
       ```
     the domain would be `MyApp.Repo`. By default, there is no domain.
@@ -169,7 +285,7 @@ defmodule Skogsra do
   end
   ```
 
-  Calling `Settings.foo/0` With a domain set is equivalent to:
+  Calling `Settings.foo/0` with a domain set is equivalent to:
 
   ```elixir
   with value when not is_nil(value) <- System.get_env("FOO"),
@@ -194,12 +310,6 @@ defmodule Skogsra do
   Gets the OS environment variable by its `name` and cast it the the type of
   the `default` value. If no `default` value is provided, returns a string.
   If the OS environment variable is not found, returns the `default` value.
-
-  ```elixir
-  config :my_app, MyApp.Repo,
-    adapter: Ecto.Adapters.Postgres,
-    hostname: Skogsra.get_env("POSTGRES_HOSTNAME", "localhost"),
-    (...)
   ```
   """
   @spec get_env(binary) :: term()
@@ -214,14 +324,6 @@ defmodule Skogsra do
   Gets the OS environment variable by its `name` and casts it to the provided
   `type`. If the OS environment variable is not found, returns the `default`
   value.
-
-  ```elixir
-  config :my_app, MyApp.Repo,
-    adapter: Ecto.Adapters.Postgres,
-    hostname: Skogsra.get_env("POSTGRES_HOSTNAME", "localhost"),
-    port: Skogsra.get_env_as(:integer, "POSTGRES_PORT", 5432),
-    (...)
-  ```
   """
   @spec get_env_as(atom(), binary()) :: term()
   @spec get_env_as(atom(), binary(), term()) :: term()
@@ -231,7 +333,9 @@ defmodule Skogsra do
       value
     else
       {:error, message} ->
-        Logger.error(message)
+        Logger.warn(fn ->
+          "Failed to get environment variable due to #{inspect message}"
+        end)
         default
     end
   end
@@ -241,7 +345,7 @@ defmodule Skogsra do
   `:name`. If it's not found, attempts to get the application configuration
   option by the `app` name and the option `key`. Optionally receives a
   `Keyword` list of `options`
-  
+
   i.e:
     - `:name` - Name of the OS environment variable. By default is `""`.
     - `:default` - Default value in case the OS environment variable and the
@@ -253,7 +357,6 @@ defmodule Skogsra do
     - `:domain` - The `key` to search in the configuration file e.g in:
       ```elixir
       config :my_app, MyApp.Repo,
-        adapter: Ecto.Adapters.Postgres,
         hostname: "localhost",
         (...)
       ```
@@ -266,10 +369,7 @@ defmodule Skogsra do
   ```elixir
   defmodule MyApp do
     def get_hostname do
-      get_app_env(:my_app, :hostname,
-        domain: MyApp.Repo,
-        name: "POSTGRES_HOSTNAME"
-      )
+      Skogsra.get_app_env(:my_app, :hostname, domain: MyApp.Repo, name: "SOME_SERVICE_HOSTNAME")
     end
   end
   ```
@@ -286,8 +386,10 @@ defmodule Skogsra do
          {:ok, value} <- do_get_app_env(type, app, domain, key, default) do
       value
     else
-      {:error, _} -> default
-      value -> value
+      {:error, _} ->
+        default
+      value ->
+        value
     end
   end
 
@@ -313,7 +415,9 @@ defmodule Skogsra do
     env_name = name |> Atom.to_string() |> String.upcase()
     value = Skogsra.get_env_as(type, env_name, default)
     quote do
-      def unquote(name)(), do: unquote(value)
+      def unquote(name)() do
+        unquote(value)
+      end
     end
   end
 
@@ -336,7 +440,9 @@ defmodule Skogsra do
     env_name = name |> Atom.to_string() |> String.upcase()
     value = Skogsra.get_app_env(app, key, [{:name, env_name} | opts])
     quote do
-      def unquote(name)(), do: unquote(value)
+      def unquote(name)() do
+        unquote(value)
+      end
     end
   end
 
@@ -364,18 +470,26 @@ defmodule Skogsra do
   end
   def do_get_app_env(opts, [domain | domains], key, default) do
     case Keyword.get(opts, domain) do
-      nil -> default
-      new_opts -> do_get_app_env(new_opts, domains, key, default)
+      nil ->
+        default
+      new_opts ->
+        do_get_app_env(new_opts, domains, key, default)
     end
   end
 
   @doc false
   def do_get_env_as(type, name, default \\ nil)
 
-  def do_get_env_as(_, "", default), do: {:ok, default}
+  def do_get_env_as(_, "", default) do
+    {:ok, default}
+  end
   def do_get_env_as(type, name, default) do
     value = System.get_env(name)
-    if is_nil(value), do: {:ok, default}, else: cast(value, type)
+    if is_nil(value) do
+      {:ok, default}
+    else
+      cast(value, type)
+    end
   end
 
   @doc false
@@ -391,7 +505,8 @@ defmodule Skogsra do
     with {:ok, default} <- cast(default, type) do
       default
     else
-      _ -> nil
+      _ ->
+        nil
     end
   end
 
@@ -433,5 +548,7 @@ defmodule Skogsra do
   def cast(value, :atom) when is_binary(value) do
     {:ok, String.to_atom(value)}
   end
-  def cast(value, _), do: {:ok, value}
+  def cast(value, _) do
+    {:ok, value}
+  end
 end
