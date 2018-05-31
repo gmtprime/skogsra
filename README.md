@@ -133,13 +133,16 @@ function auto_env_on_chpwd() {
     fi
   fi
 
+  if [ -n "$LAST_ENV" ] && [ -r "$LAST_ENV" ]
+  then
+    UNSET=$(cat $LAST_ENV | sed -e 's/^export \([0-9a-zA-Z\_]*\)=.*$/unset \1/')
+    source <(echo "$UNSET")
+    echo -e "\e[33mUnloaded ENV VARS defined in \"$LAST_ENV\"\e[0m"
+    export LAST_ENV=
+  fi
+
   if [ -r "$env_file" ]
   then
-    if [ -z "$LAST_ENV" ] && [ -r "$LAST_ENV" ]
-    then
-      `cat $LAST_ENV | sed -e 's/^export \([0-9a-zA-Z\_]*\)=.*$/unset \1/'`
-      echo -e "\e[32mUnloaded ENV VARS defined in \"$LAST_ENV\"\e[0m"
-    fi
     export LAST_ENV="$env_file"
     source $LAST_ENV
     echo -e "\e[32mLoaded \"$LAST_ENV\"\e[0m"
@@ -148,8 +151,9 @@ function auto_env_on_chpwd() {
 
 chpwd_functions=(${chpwd_functions[@]} "auto_env_on_chpwd")
 
-if [ -n "$TMUX" ]; then
-    auto_env_on_chpwd
+if [ -n "$TMUX" ]
+then
+  auto_env_on_chpwd
 fi
 
 alias change_to='function _change_to() {auto_env_on_chpwd $1}; _change_to'
