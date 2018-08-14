@@ -20,7 +20,7 @@ defmodule Skogsra.Mixfile do
   end
 
   defp deps do
-    [{:ex_doc, "~> 0.18", only: :dev},
+    [{:ex_doc, "~> 0.18.0", only: :dev, runtime: false},
      {:credo, "~> 0.9", only: :dev}]
   end
 
