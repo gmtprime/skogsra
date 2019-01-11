@@ -15,32 +15,46 @@ defmodule Skogsra do
 
   ## Small Example
 
-  You would create a settings module and define the e.g:
+  You would create a settings module e.g:
 
   ```elixir
   defmodule MyApp.Settings do
     use Skogsra
 
-    system_env :some_service_port,
-      default: 4000
-
-    app_env :some_service_hostname, :my_app, :hostname,
-      domain: MyApp.Repo,
+    app_env :my_hostname, :myapp, :hostname,
       default: "localhost"
+
+    app_env :my_port, :myservice, :port
+      default: 4000,
+      skip_config: true
   end
   ```
 
-  and you would use it in a module as follows:
+  This module will generate in essence two functions:
+  - `my_hostname/0` - it will look for the OS environment variable
+    `$MYAPP_HOSTNAME` or, if it's not set, it will look for the value set in the
+    configuration e.g:
+    ```
+    config :myapp,
+      hostname: "my.custom.host"
+    ```
+    If still the configuration is not set, it will return the default value
+    `"localhost"`.
+  - `my_port/0` - it will look for the OS environment variable
+    `$MYSERVICE_PORT` and cast it to integer or, if it's not set, it will return
+    the default `4000`.
+
+  Then using this functions is as simple as calling them in your module e.g:
 
   ```
   defmodule MyApp.SomeModule do
-    alias MyApp.Setting
+    alias MyApp.Settings
 
     (...)
 
     def connect do
-      hostname = Settings.some_service_hostname()
-      port = Settings.some_service_port()
+      hostname = Settings.my_hostname()
+      port = Settings.my_port()
 
       SomeService.connect(hostname, port)
     end
@@ -49,58 +63,13 @@ defmodule Skogsra do
   end
   ```
 
-  ### Example Explanation
-
-  The module `MyApp.Settings` will have two functions e.g:
-
-    * `some_service_port/0`: Returns the port as an integer. Calling this
-      function is roughly equivalent to the following code (without the automatic
-      type casting):
-
-      ```
-      System.get_env("SOME_SERVICE_PORT") || 4000
-      ```
-
-    * `some_service_hostname/0`: Returns the hostname as a binary. Calling this
-      function is roughly equivalent to the following code (without the automatic
-      type casting):
-
-      ```
-      case System.get_env("SOME_SERVICE_HOSTNAME") do
-        nil ->
-          :my_app
-          |> Application.get_env(MyApp.Domain, [])
-          |> Keyword.get(:hostname, "localhost")
-        value ->
-          value
-      end
-      ```
-
-  Things to note:
-    1. The functions have the same name as the OS environment variable, but in
-      lower case.
-    2. The functions infer the type from the `default` value. If no default value
-      is provided, it will be casted as binary by default.
-    3. Both functions try to retrieve and cast the value of an OS environment
-      variable, but the one declared with `app_env` searches for `:my_app`
-      configuration if the OS environment variable is empty:
-
-      ```
-      config :my_app, MyApp.Domain,
-        hostname: "some_hostname"
-      ```
-
-  If the default value is not present, Skogsra cannot infer the type, unless the
-  type is set with the option `type`. The possible values for `type` are
-  `:integer`, `:float`, `:boolean`, `:atom` and `:binary`.
-
   ## Recommended Usage
 
   The recommended way of using this project is to define a `.env` file in the
   root of your project with the variables that you want to define e.g:
 
   ```
-  export SOME_SERVICE_PORT=1234
+  export MYSERVICE_PORT=1234
   ```
 
   and then when `source`ing the file right before you execute your application.
@@ -168,7 +137,7 @@ defmodule Skogsra do
   /home/alex $ cd my_app
   Loaded "/home/alex/my_app/.env"
 
-  /home/alex/my_app $ echo "$SOME_SERVICE_PORT"
+  /home/alex/my_app $ echo "$MYSERVICE_PORT"
   1234
   ```
 
@@ -193,121 +162,172 @@ defmodule Skogsra do
   end
 
   @doc """
-  Macro that receives the `name` of the OS environment variable and some
-  optional `Keyword` list with `options` and generates a function with arity 0
-  with the same name of the OS environment variable, but in lower case e.g.
-  `"FOO"` would generate the function `foo/0`.
+  Creates a function to retrieve specific environment/application variables
+  values.
 
-  The available options are:
+  The function created is named `function_name` and will get the value
+  associated with an application called `app_name` and one or several
+  `properties` keys. Optionally, receives a list of `options`.
 
-    - `:static` - Whether the computation of the OS environment variable is
-    done on compiling time or not. By default its value is `false`.
-    - `:default` - Default value in case the OS environment variable doesn't
-    exist. By default is `nil`.
-    - `:type` - The type of the OS environment variable. By default is the type
-    of the default value. If there is no default value, the default type is
-    `binary`. The available types are `:binary`, `:integer`, `:float`,
-    `:boolean` and `:atom`.
+  Options:
+  - `default` - Default value for the variable in case is not present.
+  - `type` - Type of the variable. Used for casting the value. By default,
+  casts the value to the same type of the default value. If the default value
+  is not present, defaults to binary.
+  - `alias` - Alias for the variable in the OS. If the alias is `nil` will
+  use the default name. This option is ignoredif the option `skip_system` is
+  `true` (default is `false`).
+  - `namespace` - Namespace of the variable.
+  - `skip_system` - If `true`, doesn't look for the variable value in the
+  system. Defaults to `false`.
+  - `skip_config` - If `true`, doesn't look for the variable value in the
+  configuration. Defaults to `false`.
+  - `error_when_nil` - Errors when the value is `nil`. Defaults to `false`.
 
-  e.g
+  e.g:
 
-  ```elixir
-  defmodule Settings do
-    use Skogsra
+  For the following declaration:
 
-    system_env :foo,
-      default: 42,
-      type: :integer
-  end
+  ```
+  app_env :db_password, :myapp, [:mydb, :password],
+    default: "password",
   ```
 
-  This would generate the function `Settings.foo/0` that would search for
-  the OS environment variable `"FOO"` and cast it to integer on runtime and
-  defaults to `42`.
+  It will generate the functions `db_password/0` and `db_password/1`. The
+  optional parameter is useful to specify namespaces.
+
+  A call to `db_password/0` will try to:
+
+  1. Look for the value of `$MYAPP_MYDB_PASSWORD` OS environment variable. If
+     it's `nil`, then it will try 2.
+  2. Look for the value in the configuration e.g:
+     ```
+     config :myapp,
+       mydb: [password: "some password"]
+     ```
+     If it's `nil`, then it will try 3.
+  3. Return the value of the default value or `nil`.
+
+
+  A call to `db_password/1` with namespace `Test` will try to:
+
+  1. Look for the value of `$TEST_MYAPP_MYDB_PASSWORD` OS environment variable.
+     If it's `nil`, then it will try 2.
+  2. Look for the value in the configuration e.g:
+     ```
+     config :myapp, Test,
+       mydb: [password: "some password"]
+     ```
+     If it's `nil`, then it will try 3.
+  3. Return the value of the default value or `nil`.
   """
-  defmacro system_env(name, opts \\ []) do
-    if Keyword.get(opts, :static, false) do
-      Skogsra.static_system_env(name, opts)
-    else
-      Skogsra.runtime_system_env(name, opts)
+  defmacro app_env(function_name, app_name, properties, options \\ []) do
+    function_name! = String.to_atom("#{function_name}!")
+
+    quote do
+      @spec unquote(function_name)() :: {:ok, term()} | {:error, term()}
+      @spec unquote(function_name)(
+        namespace :: atom()
+      ) :: {:ok, term()} | {:error, term()}
+      def unquote(function_name)(namespace \\ nil) do
+        app_name = unquote(app_name)
+        properties = unquote(properties)
+        options = unquote(options)
+
+        Skogsra.get_env(app_name, properties, options)
+      end
+
+      @doc """
+      Same as #{unquote(__MODULE__)}.#{unquote(function_name)}/1 but fails on
+      error.
+      """
+      @spec unquote(function_name!)() :: term() | no_return()
+      @spec unquote(function_name!)(
+        namespace :: atom()
+      ) :: {:ok, term()} | {:error, term()}
+      def unquote(function_name!)(namespace \\ nil) do
+        app_name = unquote(app_name)
+        properties = unquote(properties)
+        options = unquote(options)
+
+        case Skogsra.get_env(namespace, app_name, properties, options) do
+          {:ok, value} ->
+            value
+
+          {:error, error} ->
+            Logger.error(fn -> IO.inspect(error) end)
+        end
+      end
     end
   end
 
-  @doc """
-  Macro that receives the `name` of the OS environment variable, the name of
-  the `app`, the name of the option `key` and some optional `Keyword` list with
-  `options` and generates a function with arity 0 with the same name of the OS
-  environment variable, but in lower case e.g. `"FOO"` would generate the
-  function `foo/0`.
-
-  The available options are:
-
-    - `:static` - Whether the computation of the OS environment variable or
-    application configuration option is done on compiling time or not. By
-    default its value is `false`.
-    - `:default` - Default value in case the OS environment variable and the
-    application configuration option don't exist. By default is `nil`.
-    - `:type` - The type of the OS environment variable. By default is the type
-    of the default value. If there is no default value, the default type is
-    `binary`. The available types are `:binary`, `:integer`, `:float`,
-    `:boolean` and `:atom`.
-    - `:domain` - The `key` to search in the configuration file e.g in:
-      ```elixir
-      config :my_app, MyApp.Repo,
-        (...)
-      ```
-    the domain would be `MyApp.Repo`. By default, there is no domain.
-
-  e.g
-
-  ```elixir
-  defmodule Settings do
-    use Skogsra
-
-    app_env :foo, :my_app, :foo,
-      default: 42,
-      type: :integer,
-      domain: MyApp.Domain
+  @doc false
+  @spec get_env(
+    namespace :: atom(),
+    app_name :: atom(),
+    properties :: atom() | [atom()],
+    options :: Keyword.t()
+  ) :: term()
+  def get_env(namespace, app_name, property, options) when is_atom(property) do
+    get_env(namespace, app_name, [property], options)
   end
-  ```
+  def get_env(namespace, app_name, properties, options) when is_list(properties) do
 
-  This would generate the function `Settings.foo/0` that would search for
-  the OS environment variable `"FOO"` and cast it to integer on runtime. If the
-  OS environment variable is not found, attempts to search for the `:foo`
-  configuration option for the application `:my_app` and the domain
-  `MyApp.Domain`. If nothing is found either, it defaults to `42`.
-
-  Calling `Settings.foo/0` without a domain set is equivalent to:
-
-  ```elixir
-  with value when not is_nil(value) <- System.get_env("FOO"),
-       {number, _} <- Integer.parse(value) do
-    number
-  else
-    _ ->
-      Application.get_env(:my_app, :foo, 42)
   end
-  ```
 
-  Calling `Settings.foo/0` with a domain set is equivalent to:
+  #################################
+  # OS environment variable helpers
 
-  ```elixir
-  with value when not is_nil(value) <- System.get_env("FOO"),
-       {number, _} <- Integer.parse(value) do
-    number
-  else
-    _ ->
-      opts = Application.get_env(:my_app, MyApp.Domain, [])
-      Keyword.get(opts, :foo, 42)
+  @doc false
+  def get_system_env(namespace, app_name, properties, options) do
+    name = gen_env_var(namespace, app_name, properties, options)
+    value = System.get_env(name)
+    if not is_nil(value), do: cast(value, options), else: value
   end
-  ```
-  """
-  defmacro app_env(name, app, key, opts \\ []) do
-    if Keyword.get(opts, :static, false) do
-      Skogsra.static_app_env(name, app, key, opts)
-    else
-      Skogsra.runtime_app_env(name, app, key, opts)
+
+  @doc false
+  @spec gen_env_var(
+    namespace :: atom(),
+    app_name :: atom(),
+    properties :: [atom()],
+    options :: Keyword.t()
+  ) :: binary()
+  def gen_env_var(namespace, app_name, properties, options) do
+    with nil <- options[:alias] do
+      namespace = gen_namespace(namespace || options[:namespace])
+      base = "#{gen_app_name(app_name)}_#{gen_property(properties)}"
+
+      if namespace == "", do: base, else: "#{namespace}_#{base}"
     end
+  end
+
+  @doc false
+  @spec gen_namespace(namespace :: atom()) :: binary()
+  def gen_namespace(nil) do
+    ""
+  end
+  def gen_namespace(namespace) when is_atom(namespace) do
+    namespace
+    |> Module.split()
+    |> Stream.map(&String.upcase/1)
+    |> Enum.join("_")
+  end
+
+  @doc false
+  @spec gen_app_name(app_name :: atom()) :: binary()
+  def gen_app_name(app_name) when is_atom(app_name) do
+    app_name
+    |> Atom.to_string()
+    |> String.upcase()
+  end
+
+  @doc false
+  @spec gen_property(properties :: [atom()]) :: binary()
+  def gen_property(properties) when is_list(properties) do
+    properties
+    |> Stream.map(&Atom.to_string/1)
+    |> Stream.map(&String.upcase/1)
+    |> Enum.join("_")
   end
 
   @doc """
