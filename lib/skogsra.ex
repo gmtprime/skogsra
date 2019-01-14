@@ -268,21 +268,77 @@ defmodule Skogsra do
     properties :: atom() | [atom()],
     options :: Keyword.t()
   ) :: term()
-  def get_env(namespace, app_name, property, options) when is_atom(property) do
+  def get_env(namespace, app_name, property, options)
+      when is_atom(property) do
     get_env(namespace, app_name, [property], options)
   end
-  def get_env(namespace, app_name, properties, options) when is_list(properties) do
+  def get_env(namespace, app_name, properties, options)
+      when is_list(properties) do
+    fsm_entry(namespace, app_name, properties, options)
+  end
 
+  ###############
+  # State machine
+
+  @doc false
+  def fsm_entry(namespace, app_name, properties, options) do
+    get_system(namespace, app_name, properties, options)
+  end
+
+  @doc false
+  def get_system(namespace, app_name, properties, options) do
+    with false <- Keyword.get(options, :skip_system, false),
+         value when not is_nil(value) <-
+           get_system_env(namespace, app_name, properties, options) do
+      {:ok, value}
+    else
+      _ ->
+        get_config(namespace, app_name, properties, options)
+    end
+  end
+
+  @doc false
+  def get_config(namespace, app_name, properties, options) do
+    with false <- Keyword.get(options, :skip_config, false),
+         value when not is_nil(value) <-
+           get_config_env(namespace, app_name, properties, options) do
+      {:ok, value}
+    else
+      _ ->
+        get_default(namespace, app_name, properties, options)
+    end
+  end
+
+  @doc false
+  def get_default(namespace, app_name, properties, options) do
+    with value when not is_nil(value) <- options[:default] do
+      {:ok, value}
+    else
+      _ ->
+        if Keyword.get(options, :error_when_nil, false) do
+          name = gen_env_var(namespace, app_name, properties, options)
+          {:error, "#{name} variable is undefined."}
+        else
+          {:ok, nil}
+        end
+    end
   end
 
   #################################
   # OS environment variable helpers
 
   @doc false
+  @spec gen_env_var(
+    namespace :: atom(),
+    app_name :: atom(),
+    properties :: [atom()],
+    options :: Keyword.t()
+  ) :: term()
   def get_system_env(namespace, app_name, properties, options) do
     name = gen_env_var(namespace, app_name, properties, options)
-    value = System.get_env(name)
-    if not is_nil(value), do: cast(value, options), else: value
+    with value when not is_nil(value) <- System.get_env(name) do
+      cast(name, value, options)
+    end
   end
 
   @doc false
@@ -295,7 +351,10 @@ defmodule Skogsra do
   def gen_env_var(namespace, app_name, properties, options) do
     with nil <- options[:alias] do
       namespace = gen_namespace(namespace || options[:namespace])
-      base = "#{gen_app_name(app_name)}_#{gen_property(properties)}"
+      app_name = gen_app_name(app_name)
+      property = gen_property(properties)
+
+      base = "#{app_name}_#{property}"
 
       if namespace == "", do: base, else: "#{namespace}_#{base}"
     end
@@ -330,249 +389,131 @@ defmodule Skogsra do
     |> Enum.join("_")
   end
 
-  @doc """
-  Gets the OS environment variable by its `name` and cast it the the type of
-  the `default` value. If no `default` value is provided, returns a string.
-  If the OS environment variable is not found, returns the `default` value.
-  ```
-  """
-  @spec get_env(binary) :: term()
-  @spec get_env(binary, term) :: term()
-  def get_env(name, default \\ nil) when is_binary(name) do
-    default
-    |> type?()
-    |> get_env_as(name, default)
-  end
-
-  @doc """
-  Gets the OS environment variable by its `name` and casts it to the provided
-  `type`. If the OS environment variable is not found, returns the `default`
-  value.
-  """
-  @spec get_env_as(atom(), binary()) :: term()
-  @spec get_env_as(atom(), binary(), term()) :: term()
-  def get_env_as(type, name, default \\ nil) when is_binary(name) do
-    default = cast_default(default, type)
-    with {:ok, value} <- do_get_env_as(type, name, default) do
-      value
-    else
-      {:error, message} ->
-        Logger.warn(fn ->
-          "Failed to get environment variable due to #{inspect message}"
-        end)
-        default
-    end
-  end
-
-  @doc """
-  Gets the OS environment variable by its name if present in the option
-  `:name`. If it's not found, attempts to get the application configuration
-  option by the `app` name and the option `key`. Optionally receives a
-  `Keyword` list of `options`
-
-  i.e:
-    - `:name` - Name of the OS environment variable. By default is `""`.
-    - `:default` - Default value in case the OS environment variable and the
-    application configuration option don't exist. By default is `nil`.
-    - `:type` - The type of the OS environment variable. By default is the type
-    of the default value. If there is no default value, the default type is
-    `binary`. The available types are `:binary`, `:integer`, `:float`,
-    `:boolean` and `:atom`.
-    - `:domain` - The `key` to search in the configuration file e.g in:
-      ```elixir
-      config :my_app, MyApp.Repo,
-        hostname: "localhost",
-        (...)
-      ```
-    the domain would be `MyApp.Repo`. By default, there is no domain. If the
-    domain is a list of atoms forces the algorithm to go recursively in the
-    structure to find the key.
-
-  e.g:
-
-  ```elixir
-  defmodule MyApp do
-    def get_hostname do
-      Skogsra.get_app_env(:my_app, :hostname, domain: MyApp.Repo, name: "SOME_SERVICE_HOSTNAME")
-    end
-  end
-  ```
-  """
-  @spec get_app_env(atom(), atom()) :: term()
-  @spec get_app_env(atom(), atom(), list()) :: term()
-  def get_app_env(app, key, options \\ []) do
-    name = Keyword.get(options, :name, "")
-    default = Keyword.get(options, :default, nil)
+  @doc false
+  @spec cast(
+    var_name :: binary(),
+    value :: term(),
+    options :: Keyword.t()
+  ) :: term()
+  def cast(var_name, value, options) do
+    default = Keyword.get(options, :default, "")
     type = Keyword.get(options, :type, type?(default))
-    with default = cast_default(default, type),
-         value when is_nil(value) <- get_env_as(type, name),
-         domain = Keyword.get(options, :domain),
-         {:ok, value} <- do_get_app_env(type, app, domain, key, default) do
-      value
-    else
-      {:error, _} ->
-        default
-      value ->
-        value
-    end
-  end
-
-  #########
-  # Helpers
-
-  @doc false
-  def runtime_system_env(name, opts) do
-    default = Keyword.get(opts, :default)
-    type = Keyword.get(opts, :type, type?(default))
-    env_name = name |> Atom.to_string() |> String.upcase()
-    quote do
-      def unquote(name)() do
-        Skogsra.get_env_as(unquote(type), unquote(env_name), unquote(default))
-      end
-    end
+    do_cast(var_name, value, type)
   end
 
   @doc false
-  def static_system_env(name, opts) do
-    default = Keyword.get(opts, :default)
-    type = Keyword.get(opts, :type, type?(default))
-    env_name = name |> Atom.to_string() |> String.upcase()
-    value = Skogsra.get_env_as(type, env_name, default)
-    quote do
-      def unquote(name)() do
-        unquote(value)
-      end
-    end
-  end
-
-  @doc false
-  def runtime_app_env(name, app, key, opts) do
-    env_name = name |> Atom.to_string() |> String.upcase()
-    quote do
-      def unquote(name)() do
-        Skogsra.get_app_env(
-          unquote(app),
-          unquote(key),
-          [{:name, unquote(env_name)} | unquote(opts)]
-        )
-      end
-    end
-  end
-
-  @doc false
-  def static_app_env(name, app, key, opts) do
-    env_name = name |> Atom.to_string() |> String.upcase()
-    value = Skogsra.get_app_env(app, key, [{:name, env_name} | opts])
-    quote do
-      def unquote(name)() do
-        unquote(value)
-      end
-    end
-  end
-
-  @doc false
-  def do_get_app_env(type, app, nil, key, default) do
-    value = Application.get_env(app, key, default)
-    cast(value, type)
-  end
-  def do_get_app_env(type, app, domain, key, default) when is_atom(domain) do
-    do_get_app_env(type, app, [domain], key, default)
-  end
-  def do_get_app_env(type, app, [domain | domains], key, default) do
-    case Application.get_env(app, domain) do
-      nil ->
-        {:ok, default}
-      opts ->
-        value = do_get_app_env(opts, domains, key, default)
-        cast(value, type)
-    end
-  end
-
-  @doc false
-  def do_get_app_env(opts, [], key, default) do
-    Keyword.get(opts, key, default)
-  end
-  def do_get_app_env(opts, [domain | domains], key, default) do
-    case Keyword.get(opts, domain) do
-      nil ->
-        default
-      new_opts ->
-        do_get_app_env(new_opts, domains, key, default)
-    end
-  end
-
-  @doc false
-  def do_get_env_as(type, name, default \\ nil)
-
-  def do_get_env_as(_, "", default) do
-    {:ok, default}
-  end
-  def do_get_env_as(type, name, default) do
-    value = System.get_env(name)
-    if is_nil(value) do
-      {:ok, default}
-    else
-      cast(value, type)
-    end
-  end
-
-  @doc false
-  def type?(nil), do: :any
+  @spec type?(value :: term()) :: atom()
+  def type?(nil), do: nil
+  def type?(value) when is_binary(value), do: :binary
   def type?(value) when is_integer(value), do: :integer
   def type?(value) when is_float(value), do: :float
   def type?(value) when is_boolean(value), do: :boolean
   def type?(value) when is_atom(value), do: :atom
-  def type?(_), do: :any
+  def type?(_), do: nil
 
   @doc false
-  def cast_default(default, type) do
-    with {:ok, default} <- cast(default, type) do
-      default
-    else
+  @spec do_cast(
+    var_name :: binary(),
+    value :: term(),
+    type :: atom()
+  ) :: term()
+  def do_cast(var_name, value, :integer) do
+    case Integer.parse(value) do
+      {value, ""} ->
+        value
       _ ->
-        nil
+        fail_cast(var_name, :integer, value)
     end
   end
 
+  def do_cast(var_name, value, :float) do
+    case Float.parse(value) do
+      {value, ""} ->
+        value
+      _ ->
+        fail_cast(var_name, :float, value)
+    end
+  end
+
+  def do_cast(var_name, value, :boolean) do
+    case String.upcase(value) do
+      "TRUE" ->
+        true
+      "FALSE" ->
+        false
+      _ ->
+        fail_cast(var_name, :boolean, value)
+    end
+  end
+
+  def do_cast(_var_name, value, :atom) do
+    String.to_atom(value)
+  end
+
+  def do_cast(_var_name, value, _) do
+    value
+  end
+
   @doc false
-  def cast(value, :integer) when is_binary(value) do
-    value = String.trim(value)
-    with {number, ""} <- Integer.parse(value) do
-      {:ok, number}
-    else
-      {_, rest} ->
-        {:error, "#{rest} from #{value} couldn't be casted to integer"}
-      :error ->
-        {:error, "Cannot cast #{inspect value} to integer"}
-    end
+  @spec fail_cast(
+    var_name :: binary(),
+    type :: atom(),
+    value :: term()
+  ):: nil
+  def fail_cast(var_name, type, value) do
+    Logger.warn(fn ->
+      "OS variable #{var_name} couldn't be cast to #{type} " <>
+      "[value: #{inspect value}]"
+    end)
+    nil
   end
-  def cast(value, :float) when is_binary(value) do
-    value = String.trim(value)
-    with {number, ""} <- Float.parse(value) do
-      {:ok, number}
-    else
-      {_, rest} ->
-        {:error, "#{rest} from #{value} couldn't be casted to float"}
-      :error ->
-        {:error, "Cannot cast #{inspect value} to float"}
-    end
+
+  ##########################################
+  # Application environment variable helpers
+
+  @doc false
+  @spec get_config_env(
+    namespace :: atom(),
+    app_name :: atom(),
+    properties :: [atom()],
+    options :: Keyword.t()
+  ) :: term()
+  def get_config_env(namespace, app_name, properties, options) do
+    namespace = namespace || options[:namespace]
+    get_config_env(namespace, app_name, properties)
   end
-  def cast(value, :boolean) when is_binary(value) do
-    real_value =
-      value
-      |> String.downcase()
-      |> String.trim()
-      |> String.to_atom()
-    if is_boolean(real_value) do
-      {:ok, real_value}
-    else
-      {:error, "Cannot cast #{inspect value} to boolean"}
-    end
+
+  @doc false
+  @spec get_config_env(
+    namespace:: atom(),
+    app_name :: atom(),
+    properties :: [atom()]
+  ) :: term()
+  def get_config_env(nil, app_name, [property | properties]) do
+    value = Application.get_env(app_name, property)
+    get_config_env(value, properties)
   end
-  def cast(value, :atom) when is_binary(value) do
-    {:ok, String.to_atom(value)}
+
+  def get_config_env(namespace, app_name, properties) do
+    value = Application.get_env(app_name, namespace)
+    get_config_env(value, properties)
   end
-  def cast(value, _) do
-    {:ok, value}
+
+  @doc false
+  @spec get_config_env(
+    value :: term(),
+    properties :: [atom()]
+  ) :: term()
+  def get_config_env(value, []) do
+    value
+  end
+
+  def get_config_env(value, [property | properties]) when is_list(value) do
+    new_value = Keyword.get(value, property, nil)
+    get_config_env(new_value, properties)
+  end
+
+  def get_config_env(_, _) do
+    nil
   end
 end
