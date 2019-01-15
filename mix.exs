@@ -1,33 +1,42 @@
 defmodule Skogsra.Mixfile do
   use Mix.Project
 
-  @version "0.2.2"
+  @version "1.0.0"
 
   def project do
-    [app: :skogsra,
-     version: @version,
-     elixir: "~> 1.4",
-     build_embedded: Mix.env == :prod,
-     start_permanent: Mix.env == :prod,
-     description: description(),
-     package: package(),
-     docs: docs(),
-     deps: deps()]
+    [
+      app: :skogsra,
+      version: @version,
+      elixir: "~> 1.4",
+      build_embedded: Mix.env == :prod,
+      start_permanent: Mix.env == :prod,
+      description: description(),
+      package: package(),
+      docs: docs(),
+      deps: deps()
+    ]
   end
 
   def application do
-    [applications: [:logger]]
+    [
+      extra_applications: [:logger],
+      mod: {Skogsra.Application, []}
+    ]
   end
 
   defp deps do
-    [{:ex_doc, "~> 0.18.0", only: :dev, runtime: false},
-     {:credo, "~> 0.9", only: :dev}]
+    [
+      {:ex_doc, "~> 0.18.0", only: :dev, runtime: false},
+      {:credo, "~> 0.9", only: :dev}
+    ]
   end
 
   defp docs do
-    [source_url: "https://github.com/gmtprime/skogsra",
-     source_ref: "v#{@version}",
-     main: Skogsra]
+    [
+      source_url: "https://github.com/gmtprime/skogsra",
+      source_ref: "v#{@version}",
+      main: Skogsra
+    ]
   end
 
   defp description do
@@ -38,8 +47,10 @@ defmodule Skogsra.Mixfile do
   end
 
   defp package do
-    [maintainers: ["Alexander de Sousa"],
-     licenses: ["MIT"],
-     links: %{"Github" => "https://github.com/gmtprime/skogsra"}]
+    [
+      maintainers: ["Alexander de Sousa"],
+      licenses: ["MIT"],
+      links: %{"Github" => "https://github.com/gmtprime/skogsra"}
+    ]
   end
 end

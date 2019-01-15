@@ -1,6 +1,5 @@
 defmodule Skogsra do
   @moduledoc """
-
   > The _Skogsrå_ was a mythical creature of the forest that appears in the form
   > of a small, beautiful woman with a seemingly friendly temperament. However,
   > those who are enticed into following her into the forest are never seen
@@ -10,7 +9,7 @@ defmodule Skogsra do
   application configuration:
 
     * Automatic type casting of values.
-    * Options documentation.
+    * Configuration options documentation.
     * Variables defaults.
 
   ## Small Example
@@ -23,45 +22,91 @@ defmodule Skogsra do
 
     app_env :my_hostname, :myapp, :hostname,
       default: "localhost"
-
-    app_env :my_port, :myservice, :port
-      default: 4000,
-      skip_config: true
   end
   ```
 
-  This module will generate in essence two functions:
-  - `my_hostname/0` - it will look for the OS environment variable
-    `$MYAPP_HOSTNAME` or, if it's not set, it will look for the value set in the
-    configuration e.g:
-    ```
-    config :myapp,
-      hostname: "my.custom.host"
-    ```
-    If still the configuration is not set, it will return the default value
-    `"localhost"`.
-  - `my_port/0` - it will look for the OS environment variable
-    `$MYSERVICE_PORT` and cast it to integer or, if it's not set, it will return
-    the default `4000`.
+  Calling `MyApp.Settings.my_hostname()` will retrieve the value for the
+  hostname in the following order:
 
-  Then using this functions is as simple as calling them in your module e.g:
-
+  1. From the OS environment variable `$MYAPP_HOSTNAME`.
+  2. From the configuration file e.g:
   ```
-  defmodule MyApp.SomeModule do
-    alias MyApp.Settings
+  config :myapp,
+    hostname: "my.custom.host"
+  ```
+  3. From the default value if it exists (In this case, it would return
+  `"localhost"`).
 
-    (...)
+  ## Handling different environments
 
-    def connect do
-      hostname = Settings.my_hostname()
-      port = Settings.my_port()
+  If it's necessary to keep several environments, it's possible to use a
+  `namespace` e.g:
 
-      SomeService.connect(hostname, port)
-    end
+  Calling `MyApp.Settings.my_hostname(Test)` will retrieve the value for the
+  hostname in the following order:
 
-    (...)
+  1. From the OS environment variable `$TEST_MYAPP_HOSTNAME`.
+  2. From the configuration file e.g:
+  ```
+  config :myapp, Test,
+    hostname: "my.custom.test.host"
+    ```
+  3. From the default value if it exists.
+
+  ## Required variables
+
+  It is possible to set a environment variable as required with the `required`
+  option e.g:
+
+  ```elixir
+  defmodule MyApp.Settings do
+    use Skogsra
+
+    app_env :my_hostname, :myapp, :port,
+      required: true
   end
   ```
+
+  If the variable `$MYAPP_PORT` is undefined and the configuration is missing,
+  calling to `MyApp.Settings.my_hostname()` will return an error tuple. Calling
+  `$MyApp.Settings.my_hostname!()` (with the bang) will raise a runtime
+  exception.
+
+  ## Automatic casting
+
+  If the default value is set, the OS environment variable value will be casted
+  as the same type of the default value. Otherwise, it is possible to set the
+  type for the variable with the option `type`. The available types are
+  `:binary` (default), `:integer`, `:float`, `:boolean` and `:atom`.
+  Additionally, you can create a function to cast the value and specify it as
+  `{module_name, function_name}` e.g:
+
+  ```elixir
+  defmodule MyApp.Settings do
+    use Skogsra
+
+    app_env :my_channels, :myapp, :channels,
+      type: {__MODULE__, channels},
+      required: true
+
+    def channels(value), do: String.split(value, ", ")
+  end
+  ```
+
+  If `$MYAPP_CHANNELS`'s value is `"ch0, ch1, ch2"` then the casted value
+  will be `["ch0", "ch1", "ch2"]`.
+
+  ## Configuration definitions
+
+  Calling `MyApp.Settings.my_hostname(nil, :system)` will print the expected OS
+  environment variable name and `MyApp.Settings.my_hostname(nil, :config)` will
+  print the expected `Mix` configuration. If the `namespace` is necessary, pass
+  it as first argument.
+
+  ## Reloading
+
+  For debugging purposes is possible to reload variables at runtime with
+  `MyApp.Settings.my_hostname(nil, :reload)`.
 
   ## Recommended Usage
 
@@ -103,7 +148,10 @@ defmodule Skogsra do
 
     if [ -n "$LAST_ENV" ] && [ -r "$LAST_ENV" ]
     then
-      UNSET=$(cat $LAST_ENV | sed -e 's/^export \([0-9a-zA-Z\_]*\)=.*$/unset \1/')
+      UNSET=$(
+        cat $LAST_ENV |
+        sed -e 's/^export \([0-9a-zA-Z\_]*\)=.*$/unset \1/'
+      )
       source <(echo "$UNSET")
       echo -e "\e[33mUnloaded ENV VARS defined in \"$LAST_ENV\"\e[0m"
       export LAST_ENV=
@@ -152,6 +200,8 @@ defmodule Skogsra do
   """
   require Logger
 
+  @cache :skogsra_cache
+
   @doc """
   For now is just equivalent to use `import Skogsra`.
   """
@@ -173,7 +223,10 @@ defmodule Skogsra do
   - `default` - Default value for the variable in case is not present.
   - `type` - Type of the variable. Used for casting the value. By default,
   casts the value to the same type of the default value. If the default value
-  is not present, defaults to binary.
+  is not present, defaults to `:binary`. The available values are: `:binary`,
+  `:integer`, `:float`, :boolean, `:atom`. Additionally, you can provide
+  `{module, function}` for custom types. The function must receive the
+  binary and return the custom type.
   - `alias` - Alias for the variable in the OS. If the alias is `nil` will
   use the default name. This option is ignoredif the option `skip_system` is
   `true` (default is `false`).
@@ -182,7 +235,8 @@ defmodule Skogsra do
   system. Defaults to `false`.
   - `skip_config` - If `true`, doesn't look for the variable value in the
   configuration. Defaults to `false`.
-  - `error_when_nil` - Errors when the value is `nil`. Defaults to `false`.
+  - `required` - Errors when the value is `nil`. Defaults to `false`.
+  - `cached` - Caches the value on the first read. Defaults to `true`.
 
   e.g:
 
@@ -243,6 +297,9 @@ defmodule Skogsra do
 
           :system ->
             Skogsra.sample_system_env(namespace, app_name, properties, options)
+
+          :reload ->
+            Skogsra.reload(namespace, app_name, properties, options)
         end
       end
 
@@ -261,6 +318,7 @@ defmodule Skogsra do
 
           {:error, error} ->
             Logger.error(fn -> IO.inspect(error) end)
+            raise RuntimeError, message: error
         end
       end
     end
@@ -269,6 +327,8 @@ defmodule Skogsra do
   ##########
   # Samplers
 
+  ##
+  # Prints the name of the OS environment variable according to its definition.
   @doc false
   @spec sample_system_env(
     namespace :: atom(),
@@ -292,6 +352,8 @@ defmodule Skogsra do
     end
   end
 
+  ##
+  # Prints a configuration for the application environment variable.
   @doc false
   @spec sample_app_env(
     namespace :: atom(),
@@ -317,6 +379,8 @@ defmodule Skogsra do
     end
   end
 
+  ##
+  # Generates a string with the `Mix` configuration code.
   @doc false
   @spec gen_config_code(
     namespace :: atom(),
@@ -341,6 +405,9 @@ defmodule Skogsra do
     expand(1, properties, options)
   end
 
+  ##
+  # Auxiliary function for gen_config_code/4 for expanding properties
+  # recursively.
   @doc false
   @spec expand(
     indent :: integer(),
@@ -369,26 +436,51 @@ defmodule Skogsra do
   ##############################
   # Environment variable getters
 
+  ##
+  # Gets the environment variable value using a state machine.
   @doc false
   @spec get_env(
     namespace :: atom(),
     app_name :: atom(),
     properties :: atom() | [atom()],
     options :: Keyword.t()
-  ) :: term()
+  ) :: {:ok, term()} | {:error, term()}
   def get_env(namespace, app_name, property, options)
       when is_atom(property) do
     get_env(namespace, app_name, [property], options)
   end
 
   def get_env(namespace, app_name, properties, options)
-      when is_list(properties) do
+        when is_list(properties) do
     fsm_entry(namespace, app_name, properties, options)
+  end
+
+  ##
+  # Gets the fresh value of a variable.
+  @doc false
+  @spec reload(
+    namespace :: atom(),
+    app_name :: atom(),
+    properties :: atom() | [atom()],
+    options :: Keyword.t()
+  ) :: {:ok, term()} | {:error, term()}
+  def reload(namespace, app_name, property, options) when is_atom(property) do
+    reload(namespace, app_name, [property], options)
+  end
+
+  def reload(namespace, app_name, properties, options) do
+    if Keyword.get(options, :cached, true) do
+      key = gen_key(namespace, app_name, properties, options)
+      delete(key)
+    end
+    get_env(namespace, app_name, properties, options)
   end
 
   ###############
   # State machine
 
+  ##
+  # Entry point for the FSM.
   @doc false
   @spec fsm_entry(
     namespace :: atom(),
@@ -397,9 +489,34 @@ defmodule Skogsra do
     options :: Keyword.t()
   ) :: {:ok, term()} | {:error, term()}
   def fsm_entry(namespace, app_name, properties, options) do
-    get_system(namespace, app_name, properties, options)
+    if Keyword.get(options, :cached, true) do
+      get_cached(namespace, app_name, properties, options)
+    else
+      get_system(namespace, app_name, properties, options)
+    end
   end
 
+  ##
+  # Tries to retrieve the cached value for the variable.
+  @doc false
+  @spec get_cached(
+    namespace :: atom(),
+    app_name :: atom(),
+    properties :: atom() | [atom()],
+    options :: Keyword.t()
+  ) :: {:ok, term()} | {:error, term()}
+  def get_cached(namespace, app_name, properties, options) do
+    key = gen_key(namespace, app_name, properties, options)
+
+    with {:error, _} <- retrieve(key),
+         {:ok, value} <- get_system(namespace, app_name, properties, options),
+         :ok <- store(key, value) do
+      {:ok, value}
+    end
+  end
+
+  ##
+  # Gets the OS environment variable value if available or not skipped.
   @doc false
   @spec get_system(
     namespace :: atom(),
@@ -418,6 +535,8 @@ defmodule Skogsra do
     end
   end
 
+  ##
+  # Gets the `Mix` config variable value if available or not skipped.
   @doc false
   @spec get_config(
     namespace :: atom(),
@@ -436,6 +555,8 @@ defmodule Skogsra do
     end
   end
 
+  ##
+  # Gets the default value if present.
   @doc false
   @spec get_default(
     namespace :: atom(),
@@ -448,7 +569,7 @@ defmodule Skogsra do
       {:ok, value}
     else
       _ ->
-        if Keyword.get(options, :error_when_nil, false) do
+        if Keyword.get(options, :required, false) do
           name = gen_env_var(namespace, app_name, properties, options)
           {:error, "#{name} variable is undefined."}
         else
@@ -457,11 +578,64 @@ defmodule Skogsra do
     end
   end
 
+  ###############
+  # Cache helpers
+
+  # Retrieves the value of a `key` from a `cache`.
+  @doc false
+  @spec retrieve(
+    key :: term()
+  ) :: {:ok, term()} | {:error, term()}
+  def retrieve(key) do
+    case :ets.lookup(@cache, key) do
+      [{^key, value} | _] ->
+        {:ok, value}
+      _ ->
+        {:error, "Not found"}
+    end
+  end
+
+  ##
+  # Stores a `value` for a `key` in a `cache`.
+  @doc false
+  @spec store(
+    key :: term(),
+    value :: term()
+  ) :: :ok
+  def store(key, value) do
+    :ets.insert(@cache, {key, value})
+    :ok
+  end
+
+  ##
+  # Deletes a key from the cache.
+  @doc false
+  @spec delete(key :: term()) :: :ok
+  def delete(key) do
+    :ets.delete(@cache, key)
+    :ok
+  end
+
+  ##
+  # Generates the key for the cache.
+  @doc false
+  @spec gen_key(
+    namespace :: atom(),
+    app_name :: atom(),
+    properties :: [atom()],
+    options :: Keyword.t()
+  ) :: term()
+  def gen_key(namespace, app_name, properties, options) do
+    :erlang.phash2({namespace, app_name, properties, options})
+  end
+
   #################################
   # OS environment variable helpers
 
+  ##
+  # Gets the OS environment variable value and casts it to the correct type.
   @doc false
-  @spec gen_env_var(
+  @spec get_system_env(
     namespace :: atom(),
     app_name :: atom(),
     properties :: [atom()],
@@ -474,6 +648,8 @@ defmodule Skogsra do
     end
   end
 
+  ##
+  # Generates the name of the OS environment variable.
   @doc false
   @spec gen_env_var(
     namespace :: atom(),
@@ -493,6 +669,8 @@ defmodule Skogsra do
     end
   end
 
+  ##
+  # Generates the namespace of the OS environment variable.
   @doc false
   @spec gen_namespace(namespace :: atom()) :: binary()
   def gen_namespace(nil) do
@@ -505,6 +683,8 @@ defmodule Skogsra do
     |> Enum.join("_")
   end
 
+  ##
+  # Generates the application name for the OS environment variable.
   @doc false
   @spec gen_app_name(app_name :: atom()) :: binary()
   def gen_app_name(app_name) when is_atom(app_name) do
@@ -513,6 +693,8 @@ defmodule Skogsra do
     |> String.upcase()
   end
 
+  ##
+  # Generates the property name for the OS environment variable.
   @doc false
   @spec gen_property(properties :: [atom()]) :: binary()
   def gen_property(properties) when is_list(properties) do
@@ -522,6 +704,8 @@ defmodule Skogsra do
     |> Enum.join("_")
   end
 
+  ##
+  # Casts the value to the correct type.
   @doc false
   @spec cast(
     var_name :: binary(),
@@ -534,6 +718,8 @@ defmodule Skogsra do
     do_cast(var_name, value, type)
   end
 
+  ##
+  # Checks the type of a value.
   @doc false
   @spec type?(value :: term()) :: atom()
   def type?(nil), do: nil
@@ -544,6 +730,8 @@ defmodule Skogsra do
   def type?(value) when is_atom(value), do: :atom
   def type?(_), do: nil
 
+  ##
+  # Casts a value to the correct type.
   @doc false
   @spec do_cast(
     var_name :: binary(),
@@ -583,10 +771,22 @@ defmodule Skogsra do
     String.to_atom(value)
   end
 
-  def do_cast(_var_name, value, _) do
+  def do_cast(_var_name, value, :binary) do
     value
   end
 
+  def do_cast(var_name, value, {module, function}) do
+    with {:ok, new_value} <- module.function(value) do
+      new_value
+    else
+      {:error, error} ->
+        Logger.warn(fn -> IO.inspect(error) end)
+        fail_cast(var_name, function, value)
+    end
+  end
+
+  ##
+  # Prints a warning when the cast failed.
   @doc false
   @spec fail_cast(
     var_name :: binary(),
@@ -604,6 +804,8 @@ defmodule Skogsra do
   ##########################################
   # Application environment variable helpers
 
+  ##
+  # Gets the `Mix` config variable value.
   @doc false
   @spec get_config_env(
     namespace :: atom(),
