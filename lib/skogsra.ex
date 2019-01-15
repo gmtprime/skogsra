@@ -229,12 +229,21 @@ defmodule Skogsra do
       @spec unquote(function_name)(
         namespace :: atom()
       ) :: {:ok, term()} | {:error, term()}
-      def unquote(function_name)(namespace \\ nil) do
+      def unquote(function_name)(namespace \\ nil, type \\ :run) do
         app_name = unquote(app_name)
         properties = unquote(properties)
         options = unquote(options)
 
-        Skogsra.get_env(app_name, properties, options)
+        case type do
+          :run ->
+            Skogsra.get_env(namespace, app_name, properties, options)
+
+          :config ->
+            Skogsra.sample_app_env(namespace, app_name, properties, options)
+
+          :system ->
+            Skogsra.sample_system_env(namespace, app_name, properties, options)
+        end
       end
 
       @doc """
@@ -246,11 +255,7 @@ defmodule Skogsra do
         namespace :: atom()
       ) :: {:ok, term()} | {:error, term()}
       def unquote(function_name!)(namespace \\ nil) do
-        app_name = unquote(app_name)
-        properties = unquote(properties)
-        options = unquote(options)
-
-        case Skogsra.get_env(namespace, app_name, properties, options) do
+        case unquote(function_name)(namespace) do
           {:ok, value} ->
             value
 
@@ -260,6 +265,109 @@ defmodule Skogsra do
       end
     end
   end
+
+  ##########
+  # Samplers
+
+  @doc false
+  @spec sample_system_env(
+    namespace :: atom(),
+    app_name :: atom(),
+    properties :: atom() | [atom()],
+    options :: Keyword.t()
+  ) :: :ok
+  def sample_system_env(namespace, app_name, property, options)
+        when is_atom(property) do
+    sample_system_env(namespace, app_name, [property], options)
+  end
+
+  def sample_system_env(namespace, app_name, properties, options) do
+    skip? = Keyword.get(options, :skip_system, false)
+
+    if skip? do
+      Logger.warn(fn -> "OS environment variable is been ignored" end)
+    else
+      name = gen_env_var(namespace, app_name, properties, options)
+      Logger.info(fn -> "OS environment variable name: $#{name}" end)
+    end
+  end
+
+  @doc false
+  @spec sample_app_env(
+    namespace :: atom(),
+    app_name :: atom(),
+    properties :: atom() | [atom()],
+    options :: Keyword.t()
+  ) :: :ok
+  def sample_app_env(namespace, app_name, property, options)
+        when is_atom(property) do
+    sample_app_env(namespace, app_name, [property], options)
+  end
+
+  def sample_app_env(namespace, app_name, properties, options) do
+    skip? = Keyword.get(options, :skip_config, false)
+
+    if skip? do
+      Logger.warn(fn -> "Application environment variable is been ignored" end)
+    else
+      code = gen_config_code(namespace, app_name, properties, options)
+      Logger.info(fn ->
+        "Application environment variable sample:\n\n #{code}"
+      end)
+    end
+  end
+
+  @doc false
+  @spec gen_config_code(
+    namespace :: atom(),
+    app_name :: atom(),
+    properties :: atom() | [atom()],
+    options :: Keyword.t()
+  ) :: binary()
+  def gen_config_code(nil, app_name, properties, options) do
+    case options[:namespace] do
+      nil ->
+        "config #{inspect app_name},\n" <>
+        expand(1, properties, options)
+
+      namespace ->
+        "config #{inspect app_name}, #{inspect namespace},\n" <>
+        expand(1, properties, options)
+    end
+  end
+
+  def gen_config_code(namespace, app_name, properties, options) do
+    "config #{inspect app_name}, #{inspect namespace},\n" <>
+    expand(1, properties, options)
+  end
+
+  @doc false
+  @spec expand(
+    indent :: integer(),
+    properties :: [atom()],
+    options :: Keyword.t()
+  ) :: binary()
+  def expand(indent, [property], options) do
+    with nil <- options[:default] do
+      type = Keyword.get(options, :type, :binary)
+      "#{String.duplicate("  ", indent)}" <>
+      "#{property}: #{type}()"
+    else
+      value ->
+        "#{String.duplicate("  ", indent)}" <>
+        "#{property}: #{type?(value)}() # Defaults to #{inspect value}"
+    end
+  end
+
+  def expand(indent, [property | properties], options) do
+    "#{String.duplicate("  ", indent)}" <>
+    "#{property}: [\n" <>
+    expand(indent + 1, properties, options) <>
+    "\n#{String.duplicate("  ", indent)}]"
+  end
+
+  ##############################
+  # Environment variable getters
 
   @doc false
   @spec get_env(
@@ -272,6 +380,7 @@ defmodule Skogsra do
       when is_atom(property) do
     get_env(namespace, app_name, [property], options)
   end
+
   def get_env(namespace, app_name, properties, options)
       when is_list(properties) do
     fsm_entry(namespace, app_name, properties, options)
@@ -281,11 +390,23 @@ defmodule Skogsra do
   # State machine
 
   @doc false
+  @spec fsm_entry(
+    namespace :: atom(),
+    app_name :: atom(),
+    properties :: atom() | [atom()],
+    options :: Keyword.t()
+  ) :: {:ok, term()} | {:error, term()}
   def fsm_entry(namespace, app_name, properties, options) do
     get_system(namespace, app_name, properties, options)
   end
 
   @doc false
+  @spec get_system(
+    namespace :: atom(),
+    app_name :: atom(),
+    properties :: atom() | [atom()],
+    options :: Keyword.t()
+  ) :: {:ok, term()} | {:error, term()}
   def get_system(namespace, app_name, properties, options) do
     with false <- Keyword.get(options, :skip_system, false),
          value when not is_nil(value) <-
@@ -298,6 +419,12 @@ defmodule Skogsra do
   end
 
   @doc false
+  @spec get_config(
+    namespace :: atom(),
+    app_name :: atom(),
+    properties :: atom() | [atom()],
+    options :: Keyword.t()
+  ) :: {:ok, term()} | {:error, term()}
   def get_config(namespace, app_name, properties, options) do
     with false <- Keyword.get(options, :skip_config, false),
          value when not is_nil(value) <-
@@ -310,6 +437,12 @@ defmodule Skogsra do
   end
 
   @doc false
+  @spec get_default(
+    namespace :: atom(),
+    app_name :: atom(),
+    properties :: atom() | [atom()],
+    options :: Keyword.t()
+  ) :: {:ok, term()} | {:error, term()}
   def get_default(namespace, app_name, properties, options) do
     with value when not is_nil(value) <- options[:default] do
       {:ok, value}
