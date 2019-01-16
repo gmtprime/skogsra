@@ -758,16 +758,13 @@ defmodule Skogsra do
     options :: Keyword.t()
   ) :: term()
   def cast(var_name, value, options) do
-    with nil <- get_default(options) do
-      type = get_type(options)
-      do_cast(var_name, value, type)
-    else
-      default ->
-        get_type(options, :binary)
-        type = type?(default)
-    default = Keyword.get(options, :default, "")
-    type = get_type(options)
-    type = Keyword.get(options, :type, type?(default))
+    type =
+      with nil <- get_default(options) do
+        get_type(options)
+      else
+        default ->
+          get_type(options) || type?(default)
+      end
     do_cast(var_name, value, type)
   end
 
