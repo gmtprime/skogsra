@@ -2,7 +2,7 @@ defmodule Skogsra.Application do
   @moduledoc false
   use Application
 
-  @cache :skogsra_cache
+  @cache Skogsra.get_cache_name()
 
   @impl true
   def start(_type, _args) do

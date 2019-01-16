@@ -283,6 +283,10 @@ defmodule Skogsra do
       @spec unquote(function_name)(
         namespace :: atom()
       ) :: {:ok, term()} | {:error, term()}
+      @spec unquote(function_name)(
+        namespace :: atom(),
+        type :: :run | :reload | :system | :config
+      ) :: {:ok, term()} | {:error, term()}
       def unquote(function_name)(namespace \\ nil, type \\ :run) do
         app_name = unquote(app_name)
         properties = unquote(properties)
@@ -292,14 +296,14 @@ defmodule Skogsra do
           :run ->
             Skogsra.get_env(namespace, app_name, properties, options)
 
+          :reload ->
+            Skogsra.reload(namespace, app_name, properties, options)
+
           :config ->
             Skogsra.sample_app_env(namespace, app_name, properties, options)
 
           :system ->
             Skogsra.sample_system_env(namespace, app_name, properties, options)
-
-          :reload ->
-            Skogsra.reload(namespace, app_name, properties, options)
         end
       end
 
@@ -325,6 +329,51 @@ defmodule Skogsra do
   end
 
   ##########
+  # Defaults
+
+  ##
+  # Gets the name of the cache.
+  @doc false
+  def get_cache_name, do: @cache
+
+  ##
+  # Whether, when getting the variable's value, `:system` or `:config` should
+  # be skipped.
+  @doc false
+  def skip?(:system, options), do: Keyword.get(options, :skip_system, false)
+  def skip?(:config, options), do: Keyword.get(options, :skip_config, false)
+
+  ##
+  # Gets namespace.
+  @doc false
+  def get_namespace(options), do: Keyword.get(options, :namespace)
+
+  ##
+  # Gets default.
+  @doc false
+  def get_default(options), do: Keyword.get(options, :default)
+
+  ##
+  # Gets variable type.
+  @doc false
+  def get_type(options), do: Keyword.get(options, :type, :binary)
+
+  ##
+  # Whether the variable is cached or not.
+  @doc false
+  def cached?(options), do: Keyword.get(options, :cached, true)
+
+  ##
+  # Whether the variable is required or not.
+  @doc false
+  def required?(options), do: Keyword.get(options, :required, false)
+
+  ##
+  # Gets OS environment variable alias.
+  @doc false
+  def get_alias(options), do: Keyword.get(options, :alias)
+
+  ##########
   # Samplers
 
   ##
@@ -342,9 +391,7 @@ defmodule Skogsra do
   end
 
   def sample_system_env(namespace, app_name, properties, options) do
-    skip? = Keyword.get(options, :skip_system, false)
-
-    if skip? do
+    if skip?(:system, options) do
       Logger.warn(fn -> "OS environment variable is been ignored" end)
     else
       name = gen_env_var(namespace, app_name, properties, options)
@@ -367,9 +414,7 @@ defmodule Skogsra do
   end
 
   def sample_app_env(namespace, app_name, properties, options) do
-    skip? = Keyword.get(options, :skip_config, false)
-
-    if skip? do
+    if skip?(:config, options) do
       Logger.warn(fn -> "Application environment variable is been ignored" end)
     else
       code = gen_config_code(namespace, app_name, properties, options)
@@ -389,7 +434,7 @@ defmodule Skogsra do
     options :: Keyword.t()
   ) :: binary()
   def gen_config_code(nil, app_name, properties, options) do
-    case options[:namespace] do
+    case get_namespace(options) do
       nil ->
         "config #{inspect app_name},\n" <>
         expand(1, properties, options)
@@ -415,8 +460,8 @@ defmodule Skogsra do
     options :: Keyword.t()
   ) :: binary()
   def expand(indent, [property], options) do
-    with nil <- options[:default] do
-      type = Keyword.get(options, :type, :binary)
+    with nil <- get_default(options) do
+      type = get_type(options)
       "#{String.duplicate("  ", indent)}" <>
       "#{property}: #{type}()"
     else
@@ -469,7 +514,7 @@ defmodule Skogsra do
   end
 
   def reload(namespace, app_name, properties, options) do
-    if Keyword.get(options, :cached, true) do
+    if cached?(options) do
       key = gen_key(namespace, app_name, properties, options)
       delete(key)
     end
@@ -489,7 +534,7 @@ defmodule Skogsra do
     options :: Keyword.t()
   ) :: {:ok, term()} | {:error, term()}
   def fsm_entry(namespace, app_name, properties, options) do
-    if Keyword.get(options, :cached, true) do
+    if cached?(options) do
       get_cached(namespace, app_name, properties, options)
     else
       get_system(namespace, app_name, properties, options)
@@ -525,7 +570,7 @@ defmodule Skogsra do
     options :: Keyword.t()
   ) :: {:ok, term()} | {:error, term()}
   def get_system(namespace, app_name, properties, options) do
-    with false <- Keyword.get(options, :skip_system, false),
+    with false <- skip?(:system, options),
          value when not is_nil(value) <-
            get_system_env(namespace, app_name, properties, options) do
       {:ok, value}
@@ -545,7 +590,7 @@ defmodule Skogsra do
     options :: Keyword.t()
   ) :: {:ok, term()} | {:error, term()}
   def get_config(namespace, app_name, properties, options) do
-    with false <- Keyword.get(options, :skip_config, false),
+    with false <- skip?(:config, options),
          value when not is_nil(value) <-
            get_config_env(namespace, app_name, properties, options) do
       {:ok, value}
@@ -565,11 +610,11 @@ defmodule Skogsra do
     options :: Keyword.t()
   ) :: {:ok, term()} | {:error, term()}
   def get_default(namespace, app_name, properties, options) do
-    with value when not is_nil(value) <- options[:default] do
+    with value when not is_nil(value) <- get_default(options) do
       {:ok, value}
     else
       _ ->
-        if Keyword.get(options, :required, false) do
+        if required?(options) do
           name = gen_env_var(namespace, app_name, properties, options)
           {:error, "#{name} variable is undefined."}
         else
@@ -658,8 +703,8 @@ defmodule Skogsra do
     options :: Keyword.t()
   ) :: binary()
   def gen_env_var(namespace, app_name, properties, options) do
-    with nil <- options[:alias] do
-      namespace = gen_namespace(namespace || options[:namespace])
+    with nil <- get_alias(options) do
+      namespace = gen_namespace(namespace || get_namespace(options))
       app_name = gen_app_name(app_name)
       property = gen_property(properties)
 
@@ -713,7 +758,15 @@ defmodule Skogsra do
     options :: Keyword.t()
   ) :: term()
   def cast(var_name, value, options) do
+    with nil <- get_default(options) do
+      type = get_type(options)
+      do_cast(var_name, value, type)
+    else
+      default ->
+        get_type(options, :binary)
+        type = type?(default)
     default = Keyword.get(options, :default, "")
+    type = get_type(options)
     type = Keyword.get(options, :type, type?(default))
     do_cast(var_name, value, type)
   end
@@ -814,7 +867,7 @@ defmodule Skogsra do
     options :: Keyword.t()
   ) :: term()
   def get_config_env(namespace, app_name, properties, options) do
-    namespace = namespace || options[:namespace]
+    namespace = namespace || get_namespace(options)
     get_config_env(namespace, app_name, properties)
   end
 
