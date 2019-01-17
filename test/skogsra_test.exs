@@ -1,12 +1,104 @@
 defmodule SkogsraTest do
   use ExUnit.Case, async: true
-  use PropCheck
 
   #######
   # Tests
 
+  ###############################
+  # Test for finite state machine
+
+  ########################
+  # Test for cache helpers
+
+  describe "cache" do
+    test "retrieves a stored value" do
+      env = [app_name: :my_app, parameters: [:a]]
+      opts = [create_cache: true]
+      env = gen_env(env, opts)
+
+      assert :ok = Skogsra.store(env, 42)
+      assert {:ok, 42} = Skogsra.retrieve(env)
+    end
+
+    test "cannot retrieve an unexistent value" do
+      env = [app_name: :my_app, parameters: [:a]]
+      opts = [create_cache: true]
+      env = gen_env(env, opts)
+
+      assert {:error, _} = Skogsra.retrieve(env)
+    end
+
+    test "cannot retrieve a deleted value" do
+      env = [app_name: :my_app, parameters: [:a]]
+      opts = [create_cache: true]
+      env = gen_env(env, opts)
+
+      assert :ok = Skogsra.store(env, 42)
+      assert {:ok, 42} = Skogsra.retrieve(env)
+      assert :ok = Skogsra.delete(env)
+      assert {:error, _} = Skogsra.retrieve(env)
+    end
+  end
+
   ###########################################
   # Test for OS environment variable helpers.
+
+  describe "get_system_env/1" do
+    test "gets system variable" do
+      env = [
+        app_name: :my_app,
+        parameters: [:parameter],
+        options: [default: 21]
+      ]
+      env = gen_env(env, [create_system: true, value: "42"])
+      assert 42 == Skogsra.get_system_env(env)
+    end
+  end
+
+  describe "gen_env_var/1" do
+    test "when there is an alias and namespace is nil" do
+      env = gen_env([options: [os_env: "MY_ALIAS"]], [])
+      assert "MY_ALIAS" == Skogsra.gen_env_var(env)
+    end
+
+    test "when there is an alias and namespace is not nil" do
+      env = [namespace: Namespace, options: [os_env: "MY_ALIAS"]]
+      env = gen_env(env, [])
+      assert "MY_ALIAS" == Skogsra.gen_env_var(env)
+    end
+
+    test "when namespace is nil, it's not in the name of the variable" do
+      env = gen_env([app_name: :my_app, parameters: [:a, :b]])
+      assert "MY_APP_A_B" == Skogsra.gen_env_var(env)
+    end
+
+    test "when namespace is not nil, it's in the name of the variable" do
+      env = [namespace: Namespace, app_name: :my_app, parameters: [:a, :b]]
+      env = gen_env(env)
+      assert "NAMESPACE_MY_APP_A_B" == Skogsra.gen_env_var(env)
+    end
+  end
+
+  describe "gen_namespace/1" do
+    test "when is an atom, generates an uppercase string" do
+      namespace = My.Namespace
+      assert "MY_NAMESPACE" == Skogsra.gen_namespace(namespace)
+    end
+  end
+
+  describe "gen_app_name/1" do
+    test "when is an atom, generates an uppercase string" do
+      app_name = :my_app
+      assert "MY_APP" == Skogsra.gen_app_name(app_name)
+    end
+  end
+
+  describe "gen_parameters/1" do
+    test "when is a list of atoms, generates a snakecase uppercase string" do
+      parameters = [:a, :b, :c]
+      assert "A_B_C" == Skogsra.gen_parameters(parameters)
+    end
+  end
 
   describe "cast/3" do
     test "when default and type are nil, casts to binary" do
@@ -98,7 +190,7 @@ defmodule SkogsraTest do
 
   describe "get_config_env/1" do
     test "when namespace is nil" do
-      env = [app_name: :skogsra_test, properties: [:key]]
+      env = [app_name: :skogsra_test, parameters: [:key]]
       value = "some_value"
 
       env = gen_env(env, [create_config: true, value: value])
@@ -107,7 +199,7 @@ defmodule SkogsraTest do
     end
 
     test "when namespace is not nil" do
-      env = [namespace: Namespace, app_name: :skogsra_test, properties: [:key]]
+      env = [namespace: Namespace, app_name: :skogsra_test, parameters: [:key]]
       value = "some_value"
 
       env = gen_env(env, [create_config: true, value: value])
@@ -118,19 +210,19 @@ defmodule SkogsraTest do
 
   describe "search_keys/2" do
 
-    test "gets single value when properties is an empty list" do
+    test "gets single value when parameters is an empty list" do
       value = "some_value"
-      properties = []
+      parameters = []
 
-      assert value == Skogsra.search_keys(value, properties)
+      assert value == Skogsra.search_keys(value, parameters)
     end
 
-    test "gets value from a list of properties" do
+    test "gets value from a list of parameters" do
       value = "some_value"
       values = [a: [b: [c: value]]]
-      properties = [:a, :b, :c]
+      parameters = [:a, :b, :c]
 
-      assert value == Skogsra.search_keys(values, properties)
+      assert value == Skogsra.search_keys(values, parameters)
     end
   end
 
@@ -139,24 +231,38 @@ defmodule SkogsraTest do
 
   ##
   # Generates a variable.
+  #
+  # - `env` - Receives a list with the same parameters as Skogsra variable
+  # struct:
+  #   - `namespace` - An atom with the namespace.
+  #   - `app_name` - An atom with the app name.
+  #   - `parameters` - A list of atoms.
+  #   - `options` - Valid options for a variable.
+  # - `options` -
+  #   - `value` - Value of the variable.
+  #   - `create_system` - Whether it creates the OS environment variable or
+  #   not.
+  #   - `create_config` - Whether it creates the application variable or not.
+  #   - `create_cache` - Whether it creates a private cache for the test or
+  #   not.
   def gen_env(env, options \\ []) do
+    namespace = env[:namespace]
+    app_name = env[:app_name]
+    parameters = env[:parameters]
+    opts = Keyword.get(env, :options, [])
+
     value = options[:value]
     create_cache? = Keyword.get(options, :create_cache, false)
     create_system? = Keyword.get(options, :create_system, false)
     create_config? = Keyword.get(options, :create_config, false)
 
-    namespace = env[:namespace]
-    app_name = env[:app_name]
-    properties = env[:properties]
-    opts = Keyword.get(env, :options, [])
-
     env =
       if create_cache? do
         :skogsra_test_cache
         |> :ets.new([:set, :public])
-        |> Skogsra.new_env(namespace, app_name, properties, opts)
+        |> Skogsra.new_env(namespace, app_name, parameters, opts)
       else
-        Skogsra.new_env(namespace, app_name, properties, opts)
+        Skogsra.new_env(namespace, app_name, parameters, opts)
       end
 
     if create_system? do
@@ -175,45 +281,45 @@ defmodule SkogsraTest do
     %Skogsra{
       namespace: nil,
       app_name: app_name,
-      properties: [property]
+      parameters: [parameter]
     },
     value
   ) do
-    ApplicationMock.put_env(app_name, property, value)
+    ApplicationMock.put_env(app_name, parameter, value)
   end
 
   defp create_config(
     %Skogsra{
       namespace: nil,
       app_name: app_name,
-      properties: [property | properties]
+      parameters: [parameter | parameters]
     },
     value
   ) do
-    value = create_value(properties, value)
-    ApplicationMock.put_env(app_name, property, value)
+    value = create_value(parameters, value)
+    ApplicationMock.put_env(app_name, parameter, value)
   end
 
   defp create_config(
     %Skogsra{
       namespace: namespace,
       app_name: app_name,
-      properties: properties
+      parameters: parameters
     },
     value
   ) do
-    value = create_value(properties, value)
+    value = create_value(parameters, value)
     ApplicationMock.put_env(app_name, namespace, value)
   end
 
   ##
   # Creates a recursive value.
-  defp create_value([property], value) do
-    [{property, value}]
+  defp create_value([parameter], value) do
+    [{parameter, value}]
   end
 
-  defp create_value([property | properties], value) do
-    [{property, create_value(properties, value)}]
+  defp create_value([parameter | parameters], value) do
+    [{parameter, create_value(parameters, value)}]
   end
 end
 """
