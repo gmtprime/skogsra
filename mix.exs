@@ -27,7 +27,8 @@ defmodule Skogsra.Mixfile do
   defp deps do
     [
       {:ex_doc, "~> 0.18.0", only: :dev, runtime: false},
-      {:credo, "~> 0.9", only: :dev}
+      {:credo, "~> 0.9", only: :dev},
+      {:propcheck, "~> 1.1", only: :test}
     ]
   end
 
