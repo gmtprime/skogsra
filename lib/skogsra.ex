@@ -649,10 +649,10 @@ defmodule Skogsra do
   def retrieve(%Skogsra{cache: cache} = env) do
     key = gen_key(env)
 
-    case :ets.lookup(cache, key) do
-      [{^key, value} | _] ->
-        {:ok, value}
-
+    with info when is_list(info) <- :ets.info(cache),
+         [{^key, value}] <- :ets.lookup(cache, key) do
+      {:ok, value}
+    else
       _ ->
         {:error, "Not found"}
     end
