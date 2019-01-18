@@ -65,7 +65,7 @@ defmodule SkogsraTest do
 
     test "casts variable with custom function" do
       SystemMock.put_env("MY_APP_LIST", "1, 2, 3")
-      assert {:ok, [1,2,3]} = TestVars.my_list()
+      assert {:ok, [1, 2, 3]} = TestVars.my_list()
     end
   end
 

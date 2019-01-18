@@ -11,89 +11,104 @@ This library attempts to improve the use of OS environment variables for
 application configuration:
 
   * Automatic type casting of values.
-  * Options documentation.
+  * Configuration options documentation.
   * Variables defaults.
 
 ## Small Example
 
-You would create a settings module and define the e.g:
+You would create a settings module e.g:
 
 ```elixir
 defmodule MyApp.Settings do
   use Skogsra
 
-  system_env :some_service_port,
-    default: 4000
-
-  app_env :some_service_hostname, :my_app, :hostname,
-    domain: MyApp.Domain,
+  app_env :my_hostname, :myapp, :hostname,
     default: "localhost"
 end
 ```
 
-and you would use it in a module as follows:
+Calling `MyApp.Settings.my_hostname()` will retrieve the value for the
+hostname in the following order:
 
+1. From the OS environment variable `$MYAPP_HOSTNAME`.
+2. From the configuration file e.g:
 ```
-defmodule MyApp.SomeModule do
-  alias MyApp.Setting
+config :myapp,
+  hostname: "my.custom.host"
+```
+3. From the default value if it exists (In this case, it would return
+`"localhost"`).
 
-  (...)
+## Handling different environments
 
-  def connect do
-    hostname = Settings.some_service_hostname()
-    port = Settings.some_service_port()
+If it's necessary to keep several environments, it's possible to use a
+`namespace` e.g:
 
-    SomeService.connect(hostname, port)
-  end
+Calling `MyApp.Settings.my_hostname(Test)` will retrieve the value for the
+hostname in the following order:
 
-  (...)
+1. From the OS environment variable `$TEST_MYAPP_HOSTNAME`.
+2. From the configuration file e.g:
+```
+config :myapp, Test,
+  hostname: "my.custom.test.host"
+  ```
+3. From the default value if it exists.
+
+## Required variables
+
+It is possible to set a environment variable as required with the `required`
+option e.g:
+
+```elixir
+defmodule MyApp.Settings do
+  use Skogsra
+
+  app_env :my_hostname, :myapp, :port,
+    required: true
 end
 ```
 
-### Example Explanation
+If the variable `$MYAPP_PORT` is undefined and the configuration is missing,
+calling to `MyApp.Settings.my_hostname()` will return an error tuple. Calling
+`$MyApp.Settings.my_hostname!()` (with the bang) will raise a runtime
+exception.
 
-The module `MyApp.Settings` will have two functions e.g:
+## Automatic casting
 
-  * `some_service_port/0`: Returns the port as an integer. Calling this
-    function is roughly equivalent to the following code (without the automatic
-    type casting):
+If the default value is set, the OS environment variable value will be casted
+as the same type of the default value. Otherwise, it is possible to set the
+type for the variable with the option `type`. The available types are
+`:binary` (default), `:integer`, `:float`, `:boolean` and `:atom`.
+Additionally, you can create a function to cast the value and specify it as
+`{module_name, function_name}` e.g:
 
-    ```
-    System.get_env("SOME_SERVICE_PORT") || 4000
-    ```
+```elixir
+defmodule MyApp.Settings do
+  use Skogsra
 
-  * `some_service_hostname/0`: Returns the hostname as a binary. Calling this
-    function is roughly equivalent to the following code (without the automatic
-    type casting):
+  app_env :my_channels, :myapp, :channels,
+    type: {__MODULE__, channels},
+    required: true
 
-    ```
-    case System.get_env("SOME_SERVICE_HOSTNAME") do
-      nil ->
-        :my_app
-        |> Application.get_env(MyApp.Domain, [])
-        |> Keyword.get(:hostname, "localhost")
-      value ->
-        value
-    end
-    ```
+  def channels(value), do: String.split(value, ", ")
+end
+```
 
-Things to note:
-  1. The functions have the same name as the OS environment variable, but in
-     lower case.
-  2. The functions infer the type from the `default` value. If no default value
-     is provided, it will be casted as binary by default.
-  3. Both functions try to retrieve and cast the value of an OS environment
-     variable, but the one declared with `app_env` searches for `:my_app`
-     configuration if the OS environment variable is empty:
+If `$MYAPP_CHANNELS`'s value is `"ch0, ch1, ch2"` then the casted value
+will be `["ch0", "ch1", "ch2"]`.
 
-     ```
-     config :my_app, MyApp.Domain,
-       hostname: "some_hostname"
-     ```
+## Configuration definitions
 
-If the default value is not present, Skogsra cannot infer the type, unless the
-type is set with the option `type`. The possible values for `type` are
-`:integer`, `:float`, `:boolean`, `:atom` and `:binary`.
+Calling `MyApp.Settings.my_hostname(nil, :system)` will print the expected OS
+environment variable name and `MyApp.Settings.my_hostname(nil, :config)` will
+print the expected `Mix` configuration. If the `namespace` is necessary, pass
+it as first parameter.
+
+## Reloading
+
+For debugging purposes is possible to reload variables at runtime with
+`MyApp.Settings.my_hostname(nil, :reload)`.
 
 ## Recommended Usage
 
@@ -101,7 +116,7 @@ The recommended way of using this project is to define a `.env` file in the
 root of your project with the variables that you want to define e.g:
 
 ```
-export SOME_SERVICE_PORT=1234
+export MYSERVICE_PORT=1234
 ```
 
 and then when `source`ing the file right before you execute your application.
@@ -135,7 +150,10 @@ function auto_env_on_chpwd() {
 
   if [ -n "$LAST_ENV" ] && [ -r "$LAST_ENV" ]
   then
-    UNSET=$(cat $LAST_ENV | sed -e 's/^export \([0-9a-zA-Z\_]*\)=.*$/unset \1/')
+    UNSET=$(
+      cat $LAST_ENV |
+      sed -e 's/^export \([0-9a-zA-Z\_]*\)=.*$/unset \1/'
+    )
     source <(echo "$UNSET")
     echo -e "\e[33mUnloaded ENV VARS defined in \"$LAST_ENV\"\e[0m"
     export LAST_ENV=
@@ -169,7 +187,7 @@ change directory e.g:
 /home/alex $ cd my_app
 Loaded "/home/alex/my_app/.env"
 
-/home/alex/my_app $ echo "$SOME_SERVICE_PORT"
+/home/alex/my_app $ echo "$MYSERVICE_PORT"
 1234
 ```
 
@@ -189,7 +207,7 @@ in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:skogsra, "~> 0.2"}]
+  [{:skogsra, "~> 1.0"}]
 end
 ```
 
