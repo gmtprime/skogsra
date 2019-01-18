@@ -346,6 +346,7 @@ defmodule Skogsra do
   """
   defmacro __using__(_) do
     quote do
+      require Logger
       import Skogsra
     end
   end

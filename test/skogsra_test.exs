@@ -4,8 +4,251 @@ defmodule SkogsraTest do
   #######
   # Tests
 
+  #################
+  # Tests for macro
+
+  describe "app_env/4" do
+    defmodule TestVars do
+      use Skogsra
+
+      app_env :my_number, :my_app, [:key, :number],
+        default: 42
+
+      app_env :my_list, :my_app, :list,
+        type: {__MODULE__, :get_list}
+
+      def get_list(value) when is_binary(value) do
+        list =
+          value
+          |> String.split(",")
+          |> Stream.map(&String.trim/1)
+          |> Enum.map(fn e -> e |> Integer.parse() |> elem(0) end)
+        {:ok, list}
+      end
+    end
+
+    test "creates functions" do
+      assert is_function(&TestVars.my_number/0)
+      assert is_function(&TestVars.my_number/1)
+      assert is_function(&TestVars.my_number/2)
+
+      assert is_function(&TestVars.my_number!/0)
+      assert is_function(&TestVars.my_number!/1)
+
+      assert is_function(&TestVars.my_list/0)
+      assert is_function(&TestVars.my_list/1)
+      assert is_function(&TestVars.my_list/2)
+
+      assert is_function(&TestVars.my_list!/0)
+      assert is_function(&TestVars.my_list!/1)
+    end
+
+    test "retrieves variable from system" do
+      SystemMock.put_env("MY_APP_KEY_NUMBER", "21")
+      assert {:ok, 21} = TestVars.my_number()
+    end
+
+    test "retrieves variable from specific namespace in system" do
+      SystemMock.put_env("NAMESPACE_MY_APP_KEY_NUMBER", "21")
+      assert {:ok, 21} = TestVars.my_number(Namespace)
+    end
+
+    test "retrieves variable from config" do
+      ApplicationMock.put_env(:my_app, :key, [number: 21])
+      assert {:ok, 21} = TestVars.my_number()
+    end
+
+    test "retrieves variable from specific namespace in config" do
+      ApplicationMock.put_env(:my_app, Namespace, [key: [number: 21]])
+      assert {:ok, 21} = TestVars.my_number(Namespace)
+    end
+
+    test "casts variable with custom function" do
+      SystemMock.put_env("MY_APP_LIST", "1, 2, 3")
+      assert {:ok, [1,2,3]} = TestVars.my_list()
+    end
+  end
+
+  ########################################
+  # Tests for environment variable getters
+
+  describe "get_env/1" do
+    test "by default caches the variable" do
+      env = [app_name: :my_app, parameters: [:key], options: [type: :integer]]
+      env = gen_env(env, [create_cache: true, create_system: true, value: "21"])
+
+      assert {:ok, 21} = Skogsra.get_env(env)
+
+      SystemMock.put_env("MY_APP_KEY", "42")
+
+      assert {:ok, 21} = Skogsra.get_env(env)
+    end
+
+    test "when is not cached changes every time" do
+      env = [
+        app_name: :my_app,
+        parameters: [:key],
+        options: [type: :integer, cached: false]
+      ]
+      env = gen_env(env, [create_cache: true, create_system: true, value: "21"])
+
+      assert {:ok, 21} = Skogsra.get_env(env)
+
+      SystemMock.put_env("MY_APP_KEY", "42")
+
+      assert {:ok, 42} = Skogsra.get_env(env)
+    end
+  end
+
+  describe "reload/1" do
+    test "reloads value every time" do
+      env = [
+        app_name: :my_app,
+        parameters: [:key],
+        options: [type: :integer]
+      ]
+      env = gen_env(env, [create_cache: true, create_system: true, value: "21"])
+
+      assert {:ok, 21} = Skogsra.reload(env)
+
+      SystemMock.put_env("MY_APP_KEY", "42")
+
+      assert {:ok, 42} = Skogsra.reload(env)
+    end
+  end
+
   ###############################
   # Test for finite state machine
+
+  describe "fsm_entry/1" do
+    test "by default caches the variable" do
+      env = [app_name: :my_app, parameters: [:key], options: [type: :integer]]
+      env = gen_env(env, [create_cache: true, create_system: true, value: "21"])
+
+      assert {:ok, 21} = Skogsra.fsm_entry(env)
+
+      SystemMock.put_env("MY_APP_KEY", "42")
+
+      assert {:ok, 21} = Skogsra.fsm_entry(env)
+    end
+
+    test "when is not cached changes every time" do
+      env = [
+        app_name: :my_app,
+        parameters: [:key],
+        options: [type: :integer, cached: false]
+      ]
+      env = gen_env(env, [create_cache: true, create_system: true, value: "21"])
+
+      assert {:ok, 21} = Skogsra.fsm_entry(env)
+
+      SystemMock.put_env("MY_APP_KEY", "42")
+
+      assert {:ok, 42} = Skogsra.fsm_entry(env)
+    end
+  end
+
+  describe "get_cached/1" do
+    test "when is not cached, caches and returns it" do
+      env = [app_name: :my_app, parameters: [:key], options: [type: :integer]]
+      env = gen_env(env, [create_cache: true, create_system: true, value: "21"])
+
+      assert {:ok, 21} = Skogsra.get_cached(env)
+    end
+
+    test "when is cached, returns the cached value" do
+      env = [app_name: :my_app, parameters: [:key], options: [type: :integer]]
+      env = gen_env(env, [create_cache: true, create_system: true, value: "21"])
+
+      assert {:ok, 21} = Skogsra.get_cached(env)
+
+      SystemMock.put_env("MY_APP_KEY", "42")
+
+      assert {:ok, 21} = Skogsra.get_cached(env)
+    end
+  end
+
+  describe "get_system/1" do
+    test "when is not skipped and the value is not nil, returns value" do
+      env = [app_name: :my_app, parameters: [:key]]
+      env = gen_env(env, [create_cache: true, create_system: true, value: 21])
+
+      assert {:ok, 21} = Skogsra.get_system(env)
+    end
+
+    test "when not skipped, value is nil, config not nil, returns config" do
+      env = [app_name: :my_app, parameters: [:key]]
+      env = gen_env(env, [create_cache: true, create_config: true, value: 21])
+
+      assert {:ok, 21} = Skogsra.get_system(env)
+    end
+
+    test "when not skipped, value is nil, config nil, returns default" do
+      env = [app_name: :my_app, parameters: [:key], options: [default: 42]]
+      env = gen_env(env, [])
+
+      assert {:ok, 42} = Skogsra.get_system(env)
+    end
+
+    test "when is skipped, config not nil, returns config" do
+      env = [app_name: :my_app, parameters: [:key]]
+      env = gen_env(env, [create_cache: true, create_config: true, value: 21])
+
+      assert {:ok, 21} = Skogsra.get_system(env)
+    end
+
+    test "when is skipped, config nil, returns default" do
+      env = [app_name: :my_app, parameters: [:key], options: [default: 42]]
+      env = gen_env(env, [])
+
+      assert {:ok, 42} = Skogsra.get_system(env)
+    end
+  end
+
+  describe "get_config/1" do
+    test "when is not skipped and the value is not nil, returns value" do
+      env = [app_name: :my_app, parameters: [:key]]
+      env = gen_env(env, [create_cache: true, create_config: true, value: 21])
+
+      assert {:ok, 21} = Skogsra.get_config(env)
+    end
+
+    test "when is not skipped and the value is nil, returns default" do
+      env = [options: [default: 42]]
+      env = gen_env(env, [])
+
+      assert {:ok, 42} = Skogsra.get_config(env)
+    end
+
+    test "when is skipped, then returns default value" do
+      env = [options: [skip_config: true, default: 42]]
+      env = gen_env(env, [])
+
+      assert {:ok, 42} = Skogsra.get_config(env)
+    end
+  end
+
+  describe "get_default/1" do
+    test "when default value is not nil, returns it" do
+      env = [options: [default: 42]]
+      env = gen_env(env, [])
+
+      assert {:ok, 42} = Skogsra.get_default(env)
+    end
+
+    test "when is required and default value is nil, errors" do
+      env = [options: [required: true]]
+      env = gen_env(env, [])
+
+      assert {:error, _} = Skogsra.get_default(env)
+    end
+
+    test "when is not required and default value is nil, returns nil" do
+      env = gen_env([], [])
+
+      assert {:ok, nil} = Skogsra.get_default(env)
+    end
+  end
 
   ########################
   # Test for cache helpers
