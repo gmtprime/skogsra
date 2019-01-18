@@ -664,7 +664,8 @@ defmodule Skogsra do
   @spec store(variable :: t(), value :: term()) :: :ok
   def store(%Skogsra{cache: cache} = env, value) do
     key = gen_key(env)
-    :ets.insert(cache, {key, value})
+
+    if :ets.info(cache) != :undefined, do: :ets.insert(cache, {key, value})
     :ok
   end
 
