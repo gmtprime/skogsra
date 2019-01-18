@@ -10,10 +10,10 @@ defmodule Skogsra.Mixfile do
       elixir: "~> 1.6",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
-      description: description(),
+      name: "Skogsrå",
       package: package(),
-      docs: docs(),
-      deps: deps()
+      deps: deps(),
+      docs: docs()
     ]
   end
 
@@ -27,17 +27,12 @@ defmodule Skogsra.Mixfile do
   defp deps do
     [
       {:ex_doc, "~> 0.18.0", only: :dev, runtime: false},
-      {:credo, "~> 0.9", only: :dev}
+      {:credo, "~> 1.0", only: :dev}
     ]
   end
 
-  defp docs do
-    [
-      source_url: "https://github.com/gmtprime/skogsra",
-      source_ref: "v#{@version}",
-      main: Skogsra
-    ]
-  end
+  #########
+  # Package
 
   defp description do
     """
@@ -48,9 +43,19 @@ defmodule Skogsra.Mixfile do
 
   defp package do
     [
+      description: description(),
+      files: ["lib", "mix.exs", "README.md", ".formatter.exs"],
       maintainers: ["Alexander de Sousa"],
       licenses: ["MIT"],
       links: %{"Github" => "https://github.com/gmtprime/skogsra"}
+    ]
+  end
+
+  defp docs do
+    [
+      source_url: "https://github.com/gmtprime/skogsra",
+      source_ref: "v#{@version}",
+      main: Skogsra
     ]
   end
 end
