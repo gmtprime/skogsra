@@ -438,10 +438,10 @@ defmodule Skogsra do
             Skogsra.reload(env)
 
           :config ->
-            Skogsra.sample_app_env(namespace, app_name, parameters, options)
+            Skogsra.sample_app_env(env)
 
           :system ->
-            Skogsra.sample_system_env(namespace, app_name, parameters, options)
+            Skogsra.sample_system_env(env)
         end
       end
 
