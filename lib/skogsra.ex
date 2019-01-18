@@ -202,24 +202,22 @@ defmodule Skogsra do
 
   @cache :skogsra_cache
 
-  defstruct [
-    cache: @cache,
-    namespace: nil,
-    app_name: nil,
-    parameters: [],
-    options: []
-  ]
+  defstruct cache: @cache,
+            namespace: nil,
+            app_name: nil,
+            parameters: [],
+            options: []
 
   @typedoc """
   Skogsra environment variable.
   """
   @type t :: %__MODULE__{
-    cache: cache :: reference() | atom(),
-    namespace: namespace :: atom(),
-    app_name: app_name :: atom(),
-    parameters: parameters :: [atom()],
-    options: options :: Keyword.t()
-  }
+          cache: cache :: reference() | atom(),
+          namespace: namespace :: atom(),
+          app_name: app_name :: atom(),
+          parameters: parameters :: [atom()],
+          options: options :: Keyword.t()
+        }
   alias __MODULE__, as: Skogsra
 
   #################################
@@ -229,17 +227,17 @@ defmodule Skogsra do
   # Creates a new environment variable.
   @doc false
   @spec new_env(
-    namespace :: atom(),
-    app_name :: atom(),
-    parameters :: atom(),
-    options :: Keyword.t()
-  ) :: t()
+          namespace :: atom(),
+          app_name :: atom(),
+          parameters :: atom(),
+          options :: Keyword.t()
+        ) :: t()
   @spec new_env(
-    namespace :: atom(),
-    app_name :: atom(),
-    parameters :: [atom()],
-    options :: Keyword.t()
-  ) :: t()
+          namespace :: atom(),
+          app_name :: atom(),
+          parameters :: [atom()],
+          options :: Keyword.t()
+        ) :: t()
   def new_env(namespace, app_name, parameters, options) do
     cache = get_cache_name()
     new_env(cache, namespace, app_name, parameters, options)
@@ -247,26 +245,26 @@ defmodule Skogsra do
 
   @doc false
   @spec new_env(
-    cache :: atom() | reference(),
-    namespace :: atom(),
-    app_name :: atom(),
-    parameters :: atom(),
-    options :: Keyword.t()
-  ) :: t()
+          cache :: atom() | reference(),
+          namespace :: atom(),
+          app_name :: atom(),
+          parameters :: atom(),
+          options :: Keyword.t()
+        ) :: t()
   @spec new_env(
-    cache :: atom() | reference(),
-    namespace :: atom(),
-    app_name :: atom(),
-    parameters :: [atom()],
-    options :: Keyword.t()
-  ) :: t()
+          cache :: atom() | reference(),
+          namespace :: atom(),
+          app_name :: atom(),
+          parameters :: [atom()],
+          options :: Keyword.t()
+        ) :: t()
   def new_env(cache, nil, app_name, parameter, options)
-        when is_atom(parameter) do
+      when is_atom(parameter) do
     new_env(cache, nil, app_name, [parameter], options)
   end
 
   def new_env(cache, nil, app_name, parameters, options)
-        when is_list(parameters) do
+      when is_list(parameters) do
     with nil <- get_namespace(options) do
       %Skogsra{
         cache: cache,
@@ -419,13 +417,12 @@ defmodule Skogsra do
 
     quote do
       @spec unquote(function_name)() :: {:ok, term()} | {:error, term()}
+      @spec unquote(function_name)(namespace :: atom()) ::
+              {:ok, term()} | {:error, term()}
       @spec unquote(function_name)(
-        namespace :: atom()
-      ) :: {:ok, term()} | {:error, term()}
-      @spec unquote(function_name)(
-        namespace :: atom(),
-        type :: :run | :reload | :system | :config
-      ) :: {:ok, term()} | {:error, term()}
+              namespace :: atom(),
+              type :: :run | :reload | :system | :config
+            ) :: {:ok, term()} | {:error, term()}
       def unquote(function_name)(namespace \\ nil, type \\ :run) do
         app_name = unquote(app_name)
         parameters = unquote(parameters)
@@ -453,9 +450,8 @@ defmodule Skogsra do
       error.
       """
       @spec unquote(function_name!)() :: term() | no_return()
-      @spec unquote(function_name!)(
-        namespace :: atom()
-      ) :: {:ok, term()} | {:error, term()}
+      @spec unquote(function_name!)(namespace :: atom()) ::
+              {:ok, term()} | {:error, term()}
       def unquote(function_name!)(namespace \\ nil) do
         case unquote(function_name)(namespace) do
           {:ok, value} ->
@@ -494,6 +490,7 @@ defmodule Skogsra do
       Logger.warn(fn -> "Application environment variable is been ignored" end)
     else
       code = gen_config_code(env)
+
       Logger.info(fn ->
         "Application environment variable sample:\n\n #{code}"
       end)
@@ -504,27 +501,23 @@ defmodule Skogsra do
   # Generates a string with the `Mix` configuration code.
   @doc false
   @spec gen_config_code(variable :: t()) :: binary()
-  def gen_config_code(
-    %Skogsra{
-      namespace: nil,
-      app_name: app_name,
-      parameters: parameters,
-      options: options
-    }
-  ) do
-    "config #{inspect app_name},\n" <>
-    expand(1, parameters, options)
+  def gen_config_code(%Skogsra{
+        namespace: nil,
+        app_name: app_name,
+        parameters: parameters,
+        options: options
+      }) do
+    "config #{inspect(app_name)},\n" <> expand(1, parameters, options)
   end
-  def gen_config_code(
-    %Skogsra{
-      namespace: namespace,
-      app_name: app_name,
-      parameters: parameters,
-      options: options
-    }
-  ) do
-    "config #{inspect app_name}, #{inspect namespace},\n" <>
-    expand(1, parameters, options)
+
+  def gen_config_code(%Skogsra{
+        namespace: namespace,
+        app_name: app_name,
+        parameters: parameters,
+        options: options
+      }) do
+    "config #{inspect(app_name)}, #{inspect(namespace)},\n" <>
+      expand(1, parameters, options)
   end
 
   ##
@@ -532,27 +525,26 @@ defmodule Skogsra do
   # recursively.
   @doc false
   @spec expand(
-    indent :: integer(),
-    parameters :: [atom()],
-    options :: Keyword.t()
-  ) :: binary()
+          indent :: integer(),
+          parameters :: [atom()],
+          options :: Keyword.t()
+        ) :: binary()
   def expand(indent, [parameter], options) do
     with nil <- get_default_value(options) do
       type = get_type(options)
-      "#{String.duplicate("  ", indent)}" <>
-      "#{parameter}: #{type}()"
+      "#{String.duplicate("  ", indent)}" <> "#{parameter}: #{type}()"
     else
       value ->
         "#{String.duplicate("  ", indent)}" <>
-        "#{parameter}: #{type?(value)}() # Defaults to #{inspect value}"
+          "#{parameter}: #{type?(value)}() # Defaults to #{inspect(value)}"
     end
   end
 
   def expand(indent, [parameter | parameters], options) do
     "#{String.duplicate("  ", indent)}" <>
-    "#{parameter}: [\n" <>
-    expand(indent + 1, parameters, options) <>
-    "\n#{String.duplicate("  ", indent)}]"
+      "#{parameter}: [\n" <>
+      expand(indent + 1, parameters, options) <>
+      "\n#{String.duplicate("  ", indent)}]"
   end
 
   ##############################
@@ -608,8 +600,7 @@ defmodule Skogsra do
   @spec get_system(variable :: t()) :: {:ok, term()} | {:error, term()}
   def get_system(%Skogsra{options: options} = env) do
     with false <- skip?(:system, options),
-         value when not is_nil(value) <-
-           get_system_env(env) do
+         value when not is_nil(value) <- get_system_env(env) do
       {:ok, value}
     else
       _ ->
@@ -623,8 +614,7 @@ defmodule Skogsra do
   @spec get_config(variable :: t()) :: {:ok, term()} | {:error, term()}
   def get_config(%Skogsra{options: options} = env) do
     with false <- skip?(:config, options),
-         value when not is_nil(value) <-
-           get_config_env(env) do
+         value when not is_nil(value) <- get_config_env(env) do
       {:ok, value}
     else
       _ ->
@@ -658,9 +648,11 @@ defmodule Skogsra do
   @spec retrieve(variable :: t()) :: {:ok, term()} | {:error, term()}
   def retrieve(%Skogsra{cache: cache} = env) do
     key = gen_key(env)
+
     case :ets.lookup(cache, key) do
       [{^key, value} | _] ->
         {:ok, value}
+
       _ ->
         {:error, "Not found"}
     end
@@ -704,6 +696,7 @@ defmodule Skogsra do
   def get_system_env(%Skogsra{} = env) do
     name = gen_env_var(env)
     module = Application.get_env(:skogsra, :system_module, System)
+
     with value when not is_nil(value) <- apply(module, :get_env, [name]) do
       cast(env, name, value)
     end
@@ -713,14 +706,12 @@ defmodule Skogsra do
   # Generates the name of the OS environment variable.
   @doc false
   @spec gen_env_var(variable :: t()) :: binary()
-  def gen_env_var(
-    %Skogsra{
-      namespace: nil,
-      app_name: app_name,
-      parameters: parameters,
-      options: options
-    }
-  ) do
+  def gen_env_var(%Skogsra{
+        namespace: nil,
+        app_name: app_name,
+        parameters: parameters,
+        options: options
+      }) do
     with nil <- get_os_env_name(options) do
       app_name = gen_app_name(app_name)
       parameters = gen_parameters(parameters)
@@ -729,14 +720,12 @@ defmodule Skogsra do
     end
   end
 
-  def gen_env_var(
-    %Skogsra{
-      namespace: namespace,
-      app_name: app_name,
-      parameters: parameters,
-      options: options
-    }
-  ) do
+  def gen_env_var(%Skogsra{
+        namespace: namespace,
+        app_name: app_name,
+        parameters: parameters,
+        options: options
+      }) do
     with nil <- get_os_env_name(options) do
       namespace = gen_namespace(namespace)
       app_name = gen_app_name(app_name)
@@ -782,10 +771,10 @@ defmodule Skogsra do
   # Casts the value to the correct type.
   @doc false
   @spec cast(
-    variable :: t(),
-    var_name :: binary(),
-    value :: term()
-  ) :: term()
+          variable :: t(),
+          var_name :: binary(),
+          value :: term()
+        ) :: term()
   def cast(%Skogsra{options: options}, var_name, value) do
     type =
       with nil <- get_default_value(options) do
@@ -794,6 +783,7 @@ defmodule Skogsra do
         default ->
           get_type(options, type?(default))
       end
+
     do_cast(var_name, value, type)
   end
 
@@ -813,14 +803,15 @@ defmodule Skogsra do
   # Casts a value to the correct type.
   @doc false
   @spec do_cast(
-    var_name :: binary(),
-    value :: term(),
-    type :: atom()
-  ) :: term()
+          var_name :: binary(),
+          value :: term(),
+          type :: atom()
+        ) :: term()
   def do_cast(var_name, value, :integer) do
     case Integer.parse(value) do
       {value, ""} ->
         value
+
       _ ->
         fail_cast(var_name, :integer, value)
     end
@@ -830,6 +821,7 @@ defmodule Skogsra do
     case Float.parse(value) do
       {value, ""} ->
         value
+
       _ ->
         fail_cast(var_name, :float, value)
     end
@@ -839,8 +831,10 @@ defmodule Skogsra do
     case String.upcase(value) do
       "TRUE" ->
         true
+
       "FALSE" ->
         false
+
       _ ->
         fail_cast(var_name, :boolean, value)
     end
@@ -868,15 +862,16 @@ defmodule Skogsra do
   # Prints a warning when the cast failed.
   @doc false
   @spec fail_cast(
-    var_name :: binary(),
-    type :: atom(),
-    value :: term()
-  ):: nil
+          var_name :: binary(),
+          type :: atom(),
+          value :: term()
+        ) :: nil
   def fail_cast(var_name, type, value) do
     Logger.warn(fn ->
       "OS variable #{var_name} couldn't be cast to #{type} " <>
-      "[value: #{inspect value}]"
+        "[value: #{inspect(value)}]"
     end)
+
     nil
   end
 
@@ -887,25 +882,21 @@ defmodule Skogsra do
   # Gets the `Mix` config variable value.
   @doc false
   @spec get_config_env(t()) :: term()
-  def get_config_env(
-    %Skogsra{
-      namespace: nil,
-      app_name: app_name,
-      parameters: [parameter | parameters]
-    }
-  ) do
+  def get_config_env(%Skogsra{
+        namespace: nil,
+        app_name: app_name,
+        parameters: [parameter | parameters]
+      }) do
     module = Application.get_env(:skogsra, :application_module, Application)
     value = apply(module, :get_env, [app_name, parameter])
     search_keys(value, parameters)
   end
 
-  def get_config_env(
-    %Skogsra{
-      namespace: namespace,
-      app_name: app_name,
-      parameters: parameters
-    }
-  ) do
+  def get_config_env(%Skogsra{
+        namespace: namespace,
+        app_name: app_name,
+        parameters: parameters
+      }) do
     module = Application.get_env(:skogsra, :application_module, Application)
     value = apply(module, :get_env, [app_name, namespace])
     search_keys(value, parameters)
@@ -915,9 +906,9 @@ defmodule Skogsra do
   # Follows the keys in parameters recursively until it finds a value.
   @doc false
   @spec search_keys(
-    value :: term(),
-    parameters :: [atom()]
-  ) :: term()
+          value :: term(),
+          parameters :: [atom()]
+        ) :: term()
   def search_keys(value, []) do
     value
   end

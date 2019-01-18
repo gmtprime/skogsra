@@ -19,9 +19,11 @@ defmodule SystemMock do
 
   def get_env(name) do
     key = get_key(name)
+
     case :ets.lookup(@cache, key) do
       [{^key, value} | _] ->
         value
+
       _ ->
         nil
     end
@@ -49,9 +51,11 @@ defmodule ApplicationMock do
 
   def get_env(app_name, property) do
     key = get_key(app_name, property)
+
     case :ets.lookup(@cache, key) do
       [{^key, value} | _] ->
         value
+
       _ ->
         nil
     end

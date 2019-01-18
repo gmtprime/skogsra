@@ -11,11 +11,9 @@ defmodule SkogsraTest do
     defmodule TestVars do
       use Skogsra
 
-      app_env :my_number, :my_app, [:key, :number],
-        default: 42
+      app_env(:my_number, :my_app, [:key, :number], default: 42)
 
-      app_env :my_list, :my_app, :list,
-        type: {__MODULE__, :get_list}
+      app_env(:my_list, :my_app, :list, type: {__MODULE__, :get_list})
 
       def get_list(value) when is_binary(value) do
         list =
@@ -23,6 +21,7 @@ defmodule SkogsraTest do
           |> String.split(",")
           |> Stream.map(&String.trim/1)
           |> Enum.map(fn e -> e |> Integer.parse() |> elem(0) end)
+
         {:ok, list}
       end
     end
@@ -54,12 +53,12 @@ defmodule SkogsraTest do
     end
 
     test "retrieves variable from config" do
-      ApplicationMock.put_env(:my_app, :key, [number: 21])
+      ApplicationMock.put_env(:my_app, :key, number: 21)
       assert {:ok, 21} = TestVars.my_number()
     end
 
     test "retrieves variable from specific namespace in config" do
-      ApplicationMock.put_env(:my_app, Namespace, [key: [number: 21]])
+      ApplicationMock.put_env(:my_app, Namespace, key: [number: 21])
       assert {:ok, 21} = TestVars.my_number(Namespace)
     end
 
@@ -75,7 +74,7 @@ defmodule SkogsraTest do
   describe "get_env/1" do
     test "by default caches the variable" do
       env = [app_name: :my_app, parameters: [:key], options: [type: :integer]]
-      env = gen_env(env, [create_cache: true, create_system: true, value: "21"])
+      env = gen_env(env, create_cache: true, create_system: true, value: "21")
 
       assert {:ok, 21} = Skogsra.get_env(env)
 
@@ -90,7 +89,8 @@ defmodule SkogsraTest do
         parameters: [:key],
         options: [type: :integer, cached: false]
       ]
-      env = gen_env(env, [create_cache: true, create_system: true, value: "21"])
+
+      env = gen_env(env, create_cache: true, create_system: true, value: "21")
 
       assert {:ok, 21} = Skogsra.get_env(env)
 
@@ -107,7 +107,8 @@ defmodule SkogsraTest do
         parameters: [:key],
         options: [type: :integer]
       ]
-      env = gen_env(env, [create_cache: true, create_system: true, value: "21"])
+
+      env = gen_env(env, create_cache: true, create_system: true, value: "21")
 
       assert {:ok, 21} = Skogsra.reload(env)
 
@@ -123,7 +124,7 @@ defmodule SkogsraTest do
   describe "fsm_entry/1" do
     test "by default caches the variable" do
       env = [app_name: :my_app, parameters: [:key], options: [type: :integer]]
-      env = gen_env(env, [create_cache: true, create_system: true, value: "21"])
+      env = gen_env(env, create_cache: true, create_system: true, value: "21")
 
       assert {:ok, 21} = Skogsra.fsm_entry(env)
 
@@ -138,7 +139,8 @@ defmodule SkogsraTest do
         parameters: [:key],
         options: [type: :integer, cached: false]
       ]
-      env = gen_env(env, [create_cache: true, create_system: true, value: "21"])
+
+      env = gen_env(env, create_cache: true, create_system: true, value: "21")
 
       assert {:ok, 21} = Skogsra.fsm_entry(env)
 
@@ -151,14 +153,14 @@ defmodule SkogsraTest do
   describe "get_cached/1" do
     test "when is not cached, caches and returns it" do
       env = [app_name: :my_app, parameters: [:key], options: [type: :integer]]
-      env = gen_env(env, [create_cache: true, create_system: true, value: "21"])
+      env = gen_env(env, create_cache: true, create_system: true, value: "21")
 
       assert {:ok, 21} = Skogsra.get_cached(env)
     end
 
     test "when is cached, returns the cached value" do
       env = [app_name: :my_app, parameters: [:key], options: [type: :integer]]
-      env = gen_env(env, [create_cache: true, create_system: true, value: "21"])
+      env = gen_env(env, create_cache: true, create_system: true, value: "21")
 
       assert {:ok, 21} = Skogsra.get_cached(env)
 
@@ -171,14 +173,14 @@ defmodule SkogsraTest do
   describe "get_system/1" do
     test "when is not skipped and the value is not nil, returns value" do
       env = [app_name: :my_app, parameters: [:key]]
-      env = gen_env(env, [create_cache: true, create_system: true, value: 21])
+      env = gen_env(env, create_cache: true, create_system: true, value: 21)
 
       assert {:ok, 21} = Skogsra.get_system(env)
     end
 
     test "when not skipped, value is nil, config not nil, returns config" do
       env = [app_name: :my_app, parameters: [:key]]
-      env = gen_env(env, [create_cache: true, create_config: true, value: 21])
+      env = gen_env(env, create_cache: true, create_config: true, value: 21)
 
       assert {:ok, 21} = Skogsra.get_system(env)
     end
@@ -192,7 +194,7 @@ defmodule SkogsraTest do
 
     test "when is skipped, config not nil, returns config" do
       env = [app_name: :my_app, parameters: [:key]]
-      env = gen_env(env, [create_cache: true, create_config: true, value: 21])
+      env = gen_env(env, create_cache: true, create_config: true, value: 21)
 
       assert {:ok, 21} = Skogsra.get_system(env)
     end
@@ -208,7 +210,7 @@ defmodule SkogsraTest do
   describe "get_config/1" do
     test "when is not skipped and the value is not nil, returns value" do
       env = [app_name: :my_app, parameters: [:key]]
-      env = gen_env(env, [create_cache: true, create_config: true, value: 21])
+      env = gen_env(env, create_cache: true, create_config: true, value: 21)
 
       assert {:ok, 21} = Skogsra.get_config(env)
     end
@@ -293,7 +295,8 @@ defmodule SkogsraTest do
         parameters: [:parameter],
         options: [default: 21]
       ]
-      env = gen_env(env, [create_system: true, value: "42"])
+
+      env = gen_env(env, create_system: true, value: "42")
       assert 42 == Skogsra.get_system_env(env)
     end
   end
@@ -311,7 +314,7 @@ defmodule SkogsraTest do
     end
 
     test "when namespace is nil, it's not in the name of the variable" do
-      env = gen_env([app_name: :my_app, parameters: [:a, :b]])
+      env = gen_env(app_name: :my_app, parameters: [:a, :b])
       assert "MY_APP_A_B" == Skogsra.gen_env_var(env)
     end
 
@@ -436,7 +439,7 @@ defmodule SkogsraTest do
       env = [app_name: :skogsra_test, parameters: [:key]]
       value = "some_value"
 
-      env = gen_env(env, [create_config: true, value: value])
+      env = gen_env(env, create_config: true, value: value)
 
       assert value == Skogsra.get_config_env(env)
     end
@@ -445,14 +448,13 @@ defmodule SkogsraTest do
       env = [namespace: Namespace, app_name: :skogsra_test, parameters: [:key]]
       value = "some_value"
 
-      env = gen_env(env, [create_config: true, value: value])
+      env = gen_env(env, create_config: true, value: value)
 
       assert value == Skogsra.get_config_env(env)
     end
   end
 
   describe "search_keys/2" do
-
     test "gets single value when parameters is an empty list" do
       value = "some_value"
       parameters = []
@@ -521,36 +523,36 @@ defmodule SkogsraTest do
   ##
   # Creates a valid config.
   defp create_config(
-    %Skogsra{
-      namespace: nil,
-      app_name: app_name,
-      parameters: [parameter]
-    },
-    value
-  ) do
+         %Skogsra{
+           namespace: nil,
+           app_name: app_name,
+           parameters: [parameter]
+         },
+         value
+       ) do
     ApplicationMock.put_env(app_name, parameter, value)
   end
 
   defp create_config(
-    %Skogsra{
-      namespace: nil,
-      app_name: app_name,
-      parameters: [parameter | parameters]
-    },
-    value
-  ) do
+         %Skogsra{
+           namespace: nil,
+           app_name: app_name,
+           parameters: [parameter | parameters]
+         },
+         value
+       ) do
     value = create_value(parameters, value)
     ApplicationMock.put_env(app_name, parameter, value)
   end
 
   defp create_config(
-    %Skogsra{
-      namespace: namespace,
-      app_name: app_name,
-      parameters: parameters
-    },
-    value
-  ) do
+         %Skogsra{
+           namespace: namespace,
+           app_name: app_name,
+           parameters: parameters
+         },
+         value
+       ) do
     value = create_value(parameters, value)
     ApplicationMock.put_env(app_name, namespace, value)
   end
@@ -565,6 +567,7 @@ defmodule SkogsraTest do
     [{parameter, create_value(parameters, value)}]
   end
 end
+
 """
 
   defmodule TestEnv do
