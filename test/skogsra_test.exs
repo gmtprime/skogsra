@@ -66,6 +66,16 @@ defmodule SkogsraTest do
       SystemMock.put_env("MY_APP_LIST", "1, 2, 3")
       assert {:ok, [1, 2, 3]} = TestVars.my_list()
     end
+
+    test "retrieves variable without ok tuple from system" do
+      SystemMock.put_env("MY_APP_KEY_NUMBER", "21")
+      assert 21 = TestVars.my_number!()
+    end
+
+    test "retrieves variable without ok tuple from config" do
+      ApplicationMock.put_env(:my_app, :key, number: 21)
+      assert 21 = TestVars.my_number!()
+    end
   end
 
   ########################################
