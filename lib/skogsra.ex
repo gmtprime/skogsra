@@ -426,7 +426,11 @@ defmodule Skogsra do
 
     quote do
       @doc Skogsra.gen_docs(
+             __MODULE__,
              unquote(function_name),
+             unquote(app_name),
+             unquote(parameters),
+             unquote(options),
              Module.get_attribute(__MODULE__, :envdoc)
            )
       @spec unquote(function_name)() :: {:ok, term()} | {:error, term()}
@@ -459,6 +463,7 @@ defmodule Skogsra do
       end
 
       @doc Skogsra.gen_short_docs(
+             __MODULE__,
              unquote(function_name),
              Module.get_attribute(__MODULE__, :envdoc)
            )
@@ -486,28 +491,32 @@ defmodule Skogsra do
   ##
   # Generates documentation.
   @doc false
-  def gen_docs(function_name, nil) do
+  def gen_docs(module, function_name, app_name, parameters, options, nil) do
     """
     #{@doc_missing}
 
-    #{general_docs(function_name)}
+    #{general_docs(module, function_name, app_name, parameters, options)}
     """
   end
 
-  def gen_docs(function_name, docs) do
+  def gen_docs(module, function_name, app_name, parameters, options, docs) do
     """
     #{docs}
 
-    #{general_docs(function_name)}
+    #{general_docs(module, function_name, app_name, parameters, options)}
     """
   end
 
   ##
   # General docs.
   @doc false
-  def general_docs(function_name) do
+  def general_docs(module, function_name, app_name, parameters, options) do
+    module = Macro.to_string(module)
+    no_namespace = Skogsra.new_env(nil, app_name, parameters, options)
+    with_namespace = Skogsra.new_env(Namespace, app_name, parameters, options)
+
     """
-    A call to `#{__MODULE__}.#{function_name}()` will:
+    A call to `#{module}.#{function_name}()` will:
 
     1. If the OS environment variable is not `nil`, will return its casted
     value.
@@ -518,49 +527,62 @@ defmodule Skogsra do
     4. If the default value is not defined and is not required, it will
     return `nil`, otherwise it will error.
 
-    A call to `#{__MODULE__}.#{function_name}(namespace)` will try
+    A call to `#{module}.#{function_name}(namespace)` will try
     to do the same as before, but using a namespace (`atom()`). This is
     useful for separating the different configurations values for the same
     variable.
 
-    The expected OS variable name can be obtained running the function
-    `#{__MODULE__}.#{function_name})(namespace, :system)` where
-    namespace can be either `nil` or any namespace.
+    The OS environment variable expected is
+    `$#{Skogsra.gen_env_var(no_namespace)}`. If there is a namespace, for
+    example `Namespace`, the OS environment variable would be
+    `$#{Skogsra.gen_env_var(with_namespace)}`.
 
-    The expected configuration file can be obtained running the function
-    `#{__MODULE__}.#{function_name})(namespace, :config)` where
-    namespace can be either `nil` or any namespace.
+    The expected application configuration is as follows:
+
+    ```
+    #{Skogsra.gen_config_code(no_namespace)}
+    ```
+
+    and with a namespace, for example `Namespace`, the expected application
+    configuration would be:
+
+    ```
+    #{Skogsra.gen_config_code(with_namespace)}
+    ```
 
     For testing purposes, the value can be reloaded at runtime with the
-    function `#{__MODULE__}.#{function_name})(namespace, :reload)`
+    function `#{module}.#{function_name}(namespace, :reload)` where
+    `namespace` can be `nil` or an `atom()`.
     """
   end
 
   ##
   # Short docs for bang function.
   @doc false
-  def gen_short_docs(function_name, nil) do
+  def gen_short_docs(module, function_name, nil) do
     """
     #{@doc_missing}
 
-    #{general_short_docs(function_name)}
+    #{general_short_docs(module, function_name)}
     """
   end
 
-  def gen_short_docs(function_name, docs) do
+  def gen_short_docs(module, function_name, docs) do
     """
     #{docs}
 
-    #{general_short_docs(function_name)}
+    #{general_short_docs(module, function_name)}
     """
   end
 
   ##
   # General short docs.
   @doc false
-  def general_short_docs(function_name) do
+  def general_short_docs(module, function_name) do
+    module = Macro.to_string(module)
+
     """
-    Same as `#{__MODULE__}.#{function_name}/0` but fails on error.
+    Same as `#{module}.#{function_name}/0` but fails on error.
 
     It can receive also a namespace when needed.
     """
@@ -633,7 +655,7 @@ defmodule Skogsra do
   def expand(indent, [parameter], options) do
     with nil <- get_default_value(options) do
       type = get_type(options)
-      "#{String.duplicate("  ", indent)}" <> "#{parameter}: #{type}()"
+      "#{String.duplicate("  ", indent)}" <> "#{parameter}: #{inspect(type)}()"
     else
       value ->
         "#{String.duplicate("  ", indent)}" <>
