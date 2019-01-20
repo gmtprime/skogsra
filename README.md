@@ -22,6 +22,7 @@ You would create a settings module e.g:
 defmodule MyApp.Settings do
   use Skogsra
 
+  @envdoc "My hostname"
   app_env :my_hostname, :myapp, :hostname,
     default: "localhost"
 end
@@ -64,14 +65,15 @@ option e.g:
 defmodule MyApp.Settings do
   use Skogsra
 
-  app_env :my_hostname, :myapp, :port,
+  @envdoc "My port"
+  app_env :my_port, :myapp, :port,
     required: true
 end
 ```
 
 If the variable `$MYAPP_PORT` is undefined and the configuration is missing,
-calling to `MyApp.Settings.my_hostname()` will return an error tuple. Calling
-`$MyApp.Settings.my_hostname!()` (with the bang) will raise a runtime
+calling to `MyApp.Settings.my_port()` will return an error tuple. Calling
+`$MyApp.Settings.my_port!()` (with the bang) will raise a runtime
 exception.
 
 ## Automatic casting
@@ -87,6 +89,7 @@ Additionally, you can create a function to cast the value and specify it as
 defmodule MyApp.Settings do
   use Skogsra
 
+  @envdoc "My channels"
   app_env :my_channels, :myapp, :channels,
     type: {__MODULE__, channels},
     required: true
@@ -116,7 +119,7 @@ The recommended way of using this project is to define a `.env` file in the
 root of your project with the variables that you want to define e.g:
 
 ```
-export MYSERVICE_PORT=1234
+export MYAPP_PORT=1234
 ```
 
 and then when `source`ing the file right before you execute your application.
@@ -187,7 +190,7 @@ change directory e.g:
 /home/alex $ cd my_app
 Loaded "/home/alex/my_app/.env"
 
-/home/alex/my_app $ echo "$MYSERVICE_PORT"
+/home/alex/my_app $ echo "$MYAPP_PORT"
 1234
 ```
 
