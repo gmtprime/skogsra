@@ -20,6 +20,7 @@ defmodule Skogsra do
   defmodule MyApp.Settings do
     use Skogsra
 
+    @envdoc "My hostname"
     app_env :my_hostname, :myapp, :hostname,
       default: "localhost"
   end
@@ -62,14 +63,15 @@ defmodule Skogsra do
   defmodule MyApp.Settings do
     use Skogsra
 
-    app_env :my_hostname, :myapp, :port,
+    @envdoc "My port"
+    app_env :my_port, :myapp, :port,
       required: true
   end
   ```
 
   If the variable `$MYAPP_PORT` is undefined and the configuration is missing,
-  calling to `MyApp.Settings.my_hostname()` will return an error tuple. Calling
-  `$MyApp.Settings.my_hostname!()` (with the bang) will raise a runtime
+  calling to `MyApp.Settings.my_port()` will return an error tuple. Calling
+  `$MyApp.Settings.my_port!()` (with the bang) will raise a runtime
   exception.
 
   ## Automatic casting
@@ -85,6 +87,7 @@ defmodule Skogsra do
   defmodule MyApp.Settings do
     use Skogsra
 
+    @envdoc "My channels"
     app_env :my_channels, :myapp, :channels,
       type: {__MODULE__, channels},
       required: true
@@ -114,7 +117,7 @@ defmodule Skogsra do
   root of your project with the variables that you want to define e.g:
 
   ```
-  export MYSERVICE_PORT=1234
+  export MYAPP_PORT=1234
   ```
 
   and then when `source`ing the file right before you execute your application.
@@ -185,7 +188,7 @@ defmodule Skogsra do
   /home/alex $ cd my_app
   Loaded "/home/alex/my_app/.env"
 
-  /home/alex/my_app $ echo "$MYSERVICE_PORT"
+  /home/alex/my_app $ echo "$MYAPP_PORT"
   1234
   ```
 
@@ -279,7 +282,13 @@ defmodule Skogsra do
     end
   end
 
-  def new_env(cache, namespace, app_name, parameters, options) do
+  def new_env(cache, namespace, app_name, parameter, options)
+      when is_atom(parameter) do
+    new_env(cache, namespace, app_name, [parameter], options)
+  end
+
+  def new_env(cache, namespace, app_name, parameters, options)
+      when is_list(parameters) do
     %Skogsra{
       cache: cache,
       namespace: namespace,
@@ -416,6 +425,10 @@ defmodule Skogsra do
     function_name! = String.to_atom("#{function_name}!")
 
     quote do
+      @doc Skogsra.gen_docs(
+             unquote(function_name),
+             Module.get_attribute(__MODULE__, :envdoc)
+           )
       @spec unquote(function_name)() :: {:ok, term()} | {:error, term()}
       @spec unquote(function_name)(namespace :: atom()) ::
               {:ok, term()} | {:error, term()}
@@ -445,10 +458,10 @@ defmodule Skogsra do
         end
       end
 
-      @doc """
-      Same as #{unquote(__MODULE__)}.#{unquote(function_name)}/1 but fails on
-      error.
-      """
+      @doc Skogsra.gen_short_docs(
+             unquote(function_name),
+             Module.get_attribute(__MODULE__, :envdoc)
+           )
       @spec unquote(function_name!)() :: term() | no_return()
       @spec unquote(function_name!)(namespace :: atom()) ::
               {:ok, term()} | {:error, term()}
@@ -463,6 +476,94 @@ defmodule Skogsra do
         end
       end
     end
+  end
+
+  ######
+  # Docs
+
+  @doc_missing "Use `@envdoc` to document this variable."
+
+  ##
+  # Generates documentation.
+  @doc false
+  def gen_docs(function_name, nil) do
+    """
+    #{@doc_missing}
+
+    #{general_docs(function_name)}
+    """
+  end
+
+  def gen_docs(function_name, docs) do
+    """
+    #{docs}
+
+    #{general_docs(function_name)}
+    """
+  end
+
+  ##
+  # General docs.
+  @doc false
+  def general_docs(function_name) do
+    """
+    A call to `#{__MODULE__}.#{function_name}()` will:
+
+    1. If the OS environment variable is not `nil`, will return its casted
+    value.
+    2. If the OS environment variable is `nil`, then it will try to get the
+    value in the configuration file.
+    3. If the configuration file does not contain the value, will return the
+    default value if it's defined.
+    4. If the default value is not defined and is not required, it will
+    return `nil`, otherwise it will error.
+
+    A call to `#{__MODULE__}.#{function_name}(namespace)` will try
+    to do the same as before, but using a namespace (`atom()`). This is
+    useful for separating the different configurations values for the same
+    variable.
+
+    The expected OS variable name can be obtained running the function
+    `#{__MODULE__}.#{function_name})(namespace, :system)` where
+    namespace can be either `nil` or any namespace.
+
+    The expected configuration file can be obtained running the function
+    `#{__MODULE__}.#{function_name})(namespace, :config)` where
+    namespace can be either `nil` or any namespace.
+
+    For testing purposes, the value can be reloaded at runtime with the
+    function `#{__MODULE__}.#{function_name})(namespace, :reload)`
+    """
+  end
+
+  ##
+  # Short docs for bang function.
+  @doc false
+  def gen_short_docs(function_name, nil) do
+    """
+    #{@doc_missing}
+
+    #{general_short_docs(function_name)}
+    """
+  end
+
+  def gen_short_docs(function_name, docs) do
+    """
+    #{docs}
+
+    #{general_short_docs(function_name)}
+    """
+  end
+
+  ##
+  # General short docs.
+  @doc false
+  def general_short_docs(function_name) do
+    """
+    Same as `#{__MODULE__}.#{function_name}/0` but fails on error.
+
+    It can receive also a namespace when needed.
+    """
   end
 
   ##########
