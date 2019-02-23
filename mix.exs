@@ -7,7 +7,7 @@ defmodule Skogsra.Mixfile do
     [
       app: :skogsra,
       version: @version,
-      elixir: "~> 1.6",
+      elixir: "~> 1.8",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       name: "Skogsrå",
@@ -26,7 +26,7 @@ defmodule Skogsra.Mixfile do
 
   defp deps do
     [
-      {:ex_doc, "~> 0.18.0", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.19.3", only: :dev, runtime: false},
       {:credo, "~> 1.0", only: :dev}
     ]
   end
