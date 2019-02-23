@@ -1,4 +1,4 @@
-# Skogsra
+# Skogsrå
 
 [![Build Status](https://travis-ci.org/gmtprime/skogsra.svg?branch=master)](https://travis-ci.org/gmtprime/skogsra) [![Hex pm](http://img.shields.io/hexpm/v/skogsra.svg?style=flat)](https://hex.pm/packages/skogsra) [![hex.pm downloads](https://img.shields.io/hexpm/dt/skogsra.svg?style=flat)](https://hex.pm/packages/skogsra)
 
@@ -138,13 +138,23 @@ be as follows:
 ## Installation
 
 The package can be installed by adding `skogsra` to your list of dependencies
-in `mix.exs`:
+in `mix.exs`.
 
-```elixir
-def deps do
-  [{:skogsra, "~> 1.1"}]
-end
-```
+- For Elixir < 1.7 and Erlang < 21:
+
+  ```elixir
+  def deps do
+    [{:skogsra, "~> 1.0.4"}]
+  end
+  ```
+
+- For Elixir ≥ 1.7 and Erlang ≥ 21
+
+  ```elixir
+  def deps do
+    [{:skogsra, "~> 1.1"}]
+  end
+  ```
 
 ## Author
 
@@ -152,5 +162,5 @@ Alexander de Sousa.
 
 ## License
 
-`Skogsra` is released under the MIT License. See the LICENSE file for further
+_Skogsrå_ is released under the MIT License. See the LICENSE file for further
 details.
