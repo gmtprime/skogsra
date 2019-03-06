@@ -401,7 +401,7 @@ defmodule Skogsra do
            )
       @spec unquote(function_name!)() :: term() | no_return()
       @spec unquote(function_name!)(namespace :: atom()) ::
-              {:ok, term()} | {:error, term()}
+              term() | no_return()
       def unquote(function_name!)(namespace \\ nil) do
         case unquote(function_name)(namespace) do
           {:ok, value} ->
