@@ -10,9 +10,11 @@
 This library attempts to improve the use of OS environment variables for
 application configuration:
 
-  * Automatic type casting of values.
-  * Configuration options documentation.
-  * Variables defaults.
+* Automatic type casting of values.
+* Automatic documentation generation for variables.
+* Variable defaults.
+* Runtime reloading.
+* Runtime setting the value with the name of the variable.
 
 ## Small Example
 
@@ -101,17 +103,13 @@ end
 If `$MYAPP_CHANNELS`'s value is `"ch0, ch1, ch2"` then the casted value
 will be `["ch0", "ch1", "ch2"]`.
 
-## Configuration definitions
+## Setting and reloading variables
 
-Calling `MyApp.Settings.my_hostname(nil, :system)` will print the expected OS
-environment variable name and `MyApp.Settings.my_hostname(nil, :config)` will
-print the expected `Mix` configuration. If the `namespace` is necessary, pass
-it as first parameter.
+It's possible to set a value for the variable at runtime with e.g.
+`MyApp.Settings.put_my_hostname("my.other.hostname")`.
 
-## Reloading
-
-For debugging purposes is possible to reload variables at runtime with
-`MyApp.Settings.my_hostname(nil, :reload)`.
+Also, for debugging purposes is possible to reload variables at runtime with
+e.g. `MyApp.Settings.reload_my_hostname()`.
 
 ## Using with _Hab_
 
@@ -126,9 +124,9 @@ several of those files for different purposes e.g:
 - `.envrc.test` for testing OS variables.
 - `.envrc` for development variables.
 
-_Hab_ will load the development variables by default, but it can load the other
-files using the command `load_hab <extension>` e.g. loading `.envrc.prod` would
-be as follows:
+_Hab_ will load the development variables by default, but it can load the
+other files using the command `load_hab <extension>` e.g. loading
+`.envrc.prod` would be as follows:
 
 ```bash
 ~/my_project $ load_hab prod
