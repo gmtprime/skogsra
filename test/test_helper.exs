@@ -65,4 +65,7 @@ end
 {:ok, _} = SystemMock.start_link()
 {:ok, _} = ApplicationMock.start_link()
 
+Application.put_env(:skogsra, :system_module, SystemMock)
+Application.put_env(:skogsra, :application_module, ApplicationMock)
+
 ExUnit.start()
