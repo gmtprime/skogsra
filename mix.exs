@@ -1,7 +1,8 @@
 defmodule Skogsra.Mixfile do
   use Mix.Project
 
-  @version "1.1.1"
+  @version "1.2.0"
+  @root "https://github.com/gmtprime/skogsra"
 
   def project do
     [
@@ -16,6 +17,9 @@ defmodule Skogsra.Mixfile do
       docs: docs()
     ]
   end
+
+  #############
+  # Application
 
   def application do
     [
@@ -36,8 +40,8 @@ defmodule Skogsra.Mixfile do
 
   defp description do
     """
-    Skogsra is a library to manage OS environment variables and application
-    configuration options with ease.
+    Manages OS environment variables and application configuration options with
+    ease.
     """
   end
 
@@ -47,15 +51,43 @@ defmodule Skogsra.Mixfile do
       files: ["lib", "mix.exs", "README.md", ".formatter.exs"],
       maintainers: ["Alexander de Sousa"],
       licenses: ["MIT"],
-      links: %{"Github" => "https://github.com/gmtprime/skogsra"}
+      links: %{
+        "Changelog" => "#{@root}/blob/master/CHANGELOG.md",
+        "Github" => @root
+      }
     ]
   end
 
+  ###############
+  # Documentation
+
   defp docs do
     [
-      source_url: "https://github.com/gmtprime/skogsra",
+      main: "readme",
+      extras: [
+        "README.md",
+        "CHANGELOG.md"
+      ],
+      source_url: @root,
       source_ref: "v#{@version}",
-      main: Skogsra
+      groups_for_modules: [
+        "Skogsra": [
+          Skogsra,
+          Skogsra.Settings
+        ],
+        "Library Core": [
+          Skogsra.Env,
+          Skogsra.Core
+        ],
+        "Generalizations": [
+          Skogsra.App,
+          Skogsra.System,
+          Skogsra.Cache
+        ],
+        "Documentation Generation": [
+          Skogsra.Docs
+        ]
+      ]
     ]
   end
 end

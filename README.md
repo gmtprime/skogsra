@@ -11,10 +11,10 @@ This library attempts to improve the use of OS environment variables for
 application configuration:
 
 * Automatic type casting of values.
-* Automatic documentation generation for variables.
 * Variable defaults.
+* Automatic documentation generation for variables.
 * Runtime reloading.
-* Runtime setting the value with the name of the variable.
+* Setting variable's values at runtime.
 
 ## Small Example
 
@@ -35,10 +35,10 @@ hostname in the following order:
 
 1. From the OS environment variable `$MYAPP_HOSTNAME`.
 2. From the configuration file e.g:
-```
-config :myapp,
-  hostname: "my.custom.host"
-```
+   ```
+   config :myapp,
+     hostname: "my.custom.host"
+   ```
 3. From the default value if it exists (In this case, it would return
 `"localhost"`).
 
@@ -52,10 +52,10 @@ hostname in the following order:
 
 1. From the OS environment variable `$TEST_MYAPP_HOSTNAME`.
 2. From the configuration file e.g:
-```
-config :myapp, Test,
-  hostname: "my.custom.test.host"
-  ```
+   ```
+   config :myapp, Test,
+     hostname: "my.custom.test.host"
+   ```
 3. From the default value if it exists.
 
 ## Required variables
@@ -150,7 +150,7 @@ in `mix.exs`.
 
   ```elixir
   def deps do
-    [{:skogsra, "~> 1.1"}]
+    [{:skogsra, "~> 1.2"}]
   end
   ```
 
