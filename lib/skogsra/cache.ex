@@ -23,14 +23,12 @@ defmodule Skogsra.Cache do
   def get_env(env)
 
   def get_env(%Env{cache: cache} = env) do
-    key = gen_key(env)
-
-    case :ets.lookup(cache, key) do
-      [] ->
+    with {:ok, key} <- gen_key(env),
+         [{^key, value} | _] <- :ets.lookup(cache, key) do
+      {:ok, value}
+    else
+      _ ->
         :error
-
-      [{^key, value} | _] ->
-        {:ok, value}
     end
   end
 
@@ -41,8 +39,10 @@ defmodule Skogsra.Cache do
   def put_env(env, value)
 
   def put_env(%Env{cache: cache} = env, value) do
-    key = gen_key(env)
-    :ets.insert(cache, {key, value})
+    with {:ok, key} <- gen_key(env) do
+      :ets.insert(cache, {key, value})
+    end
+
     :ok
   end
 
@@ -50,9 +50,20 @@ defmodule Skogsra.Cache do
   # Helpers
 
   @doc false
-  def gen_key(%Env{} = env) do
-    env
-    |> Map.take([:namespace, :app_name, :keys, :options])
-    |> :erlang.phash2()
+  @spec gen_key(Env.t()) :: {:ok, integer()} | :error
+  def gen_key(env)
+
+  def gen_key(%Env{cache: cache} = env) do
+    with value when value != :undefined <- :ets.info(cache) do
+      key =
+        env
+        |> Map.take([:namespace, :app_name, :keys, :options])
+        |> :erlang.phash2()
+
+      {:ok, key}
+    else
+      _ ->
+        :error
+    end
   end
 end
