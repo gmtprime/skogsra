@@ -36,7 +36,7 @@ defmodule SkogsraTest do
     end
 
     test "gets variable's value from config for a namespace" do
-      ApplicationMock.put_env(:my_app, Namespace, [from_config: 42])
+      ApplicationMock.put_env(:my_app, Namespace, from_config: 42)
       assert {:ok, 42} = TestVars.from_config(Namespace)
     end
 

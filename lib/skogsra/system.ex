@@ -47,6 +47,7 @@ defmodule Skogsra.System do
         keys = gen_keys(env)
 
         "#{namespace}#{app_name}_#{keys}"
+
       value ->
         value
     end
@@ -87,6 +88,7 @@ defmodule Skogsra.System do
       |> Module.split()
       |> Stream.map(&String.upcase/1)
       |> Enum.join("_")
+
     "#{value}_"
   end
 
@@ -112,6 +114,7 @@ defmodule Skogsra.System do
     case options[:type] do
       nil ->
         type?(options[:default]) || :binary
+
       type ->
         type
     end
@@ -190,16 +193,18 @@ defmodule Skogsra.System do
 
   def fail_cast(type, name, nil) do
     Logger.warn(fn ->
-      "OS variable #{name} cannot be casted to #{inspect type}"
+      "OS variable #{name} cannot be casted to #{inspect(type)}"
     end)
+
     nil
   end
 
   def fail_cast(type, name, reason) do
     Logger.warn(fn ->
-      "OS variable #{name} cannot be casted to #{inspect type} " <>
-        "due to #{inspect reason}"
+      "OS variable #{name} cannot be casted to #{inspect(type)} " <>
+        "due to #{inspect(reason)}"
     end)
+
     nil
   end
 end

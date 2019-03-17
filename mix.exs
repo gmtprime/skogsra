@@ -71,7 +71,7 @@ defmodule Skogsra.Mixfile do
       source_url: @root,
       source_ref: "v#{@version}",
       groups_for_modules: [
-        "Skogsra": [
+        Skogsra: [
           Skogsra,
           Skogsra.Settings
         ],
@@ -79,7 +79,7 @@ defmodule Skogsra.Mixfile do
           Skogsra.Env,
           Skogsra.Core
         ],
-        "Generalizations": [
+        Generalizations: [
           Skogsra.App,
           Skogsra.System,
           Skogsra.Cache

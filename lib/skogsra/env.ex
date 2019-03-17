@@ -105,6 +105,7 @@ defmodule Skogsra.Env do
   def new(cache, namespace, app_name, keys, options) when is_list(keys) do
     namespace = if is_nil(namespace), do: options[:namespace], else: namespace
     options = defaults(options)
+
     %Env{
       cache: cache,
       namespace: namespace,

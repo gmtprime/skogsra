@@ -6,7 +6,7 @@ defmodule Skogsra.SystemTest do
 
   describe "get_env/1" do
     test "when skip_system is true, skips it" do
-      env = Env.new(nil, :system_app, [:a, :b], [skips_system: true])
+      env = Env.new(nil, :system_app, [:a, :b], skips_system: true)
 
       assert nil == System.get_env(env)
     end
@@ -14,10 +14,9 @@ defmodule Skogsra.SystemTest do
     test "when defined, gets the value" do
       SystemMock.put_env("SYSTEM_APP_A_B", "42")
 
-      env = Env.new(nil, :system_app, [:a, :b], [default: 21])
+      env = Env.new(nil, :system_app, [:a, :b], default: 21)
 
       assert 42 == System.get_env(env)
-
     end
 
     test "when undefined, does not get the value" do
@@ -29,7 +28,7 @@ defmodule Skogsra.SystemTest do
 
   describe "gen_env_name/1" do
     test "when os_env defined, returns it" do
-      env = Env.new(nil, :app, [:a, :b], [os_env: "FOO"])
+      env = Env.new(nil, :app, [:a, :b], os_env: "FOO")
 
       assert "FOO" == System.gen_env_name(env)
     end
@@ -79,19 +78,19 @@ defmodule Skogsra.SystemTest do
 
   describe "cast/3" do
     test "casts value as default type" do
-      env = Env.new(nil, :app, :key, [default: 42])
+      env = Env.new(nil, :app, :key, default: 42)
       assert 42 == System.cast(env, "FOO", "42")
     end
 
     test "casts value as type" do
-      env = Env.new(nil, :app, :key, [type: :integer])
+      env = Env.new(nil, :app, :key, type: :integer)
       assert 42 == System.cast(env, "FOO", "42")
     end
   end
 
   describe "get_type/1" do
     test "returns default type" do
-      env = Env.new(nil, :app, :key, [default: 42])
+      env = Env.new(nil, :app, :key, default: 42)
       assert :integer == System.get_type(env)
     end
 
@@ -101,12 +100,12 @@ defmodule Skogsra.SystemTest do
     end
 
     test "returns type" do
-      env = Env.new(nil, :app, :key, [type: :float])
+      env = Env.new(nil, :app, :key, type: :float)
       assert :float == System.get_type(env)
     end
 
     test "type takes precedence over default" do
-      env = Env.new(nil, :app, :key, [type: :float, default: 42])
+      env = Env.new(nil, :app, :key, type: :float, default: 42)
       assert :float == System.get_type(env)
     end
   end

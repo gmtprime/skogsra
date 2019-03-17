@@ -18,7 +18,7 @@ defmodule Skogsra.EnvTest do
     end
 
     test "sets namespace" do
-      assert %Env{namespace: Test} = Env.new(nil, :app, :key, [namespace: Test])
+      assert %Env{namespace: Test} = Env.new(nil, :app, :key, namespace: Test)
     end
   end
 end

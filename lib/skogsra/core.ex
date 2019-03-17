@@ -28,6 +28,7 @@ defmodule Skogsra.Core do
     case get_env(env) do
       {:ok, value} ->
         value
+
       {:error, reason} ->
         raise reason
     end
@@ -108,6 +109,7 @@ defmodule Skogsra.Core do
     case App.get_env(env) do
       nil ->
         get_default(env)
+
       value ->
         {:ok, value}
     end

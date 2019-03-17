@@ -77,7 +77,6 @@ defmodule Skogsra.Docs do
     """
   end
 
-
   @doc """
   Generates short docs for a variable given its `module`, `function_name`,
   and custom `docs`.

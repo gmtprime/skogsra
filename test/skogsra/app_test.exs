@@ -6,7 +6,7 @@ defmodule Skogsra.AppTest do
 
   describe "get_env/1" do
     test "when skip_config is true, returns nil" do
-      env = Env.new(nil, :app, :key, [skip_config: true])
+      env = Env.new(nil, :app, :key, skip_config: true)
 
       assert nil == App.get_env(env)
     end
@@ -20,7 +20,7 @@ defmodule Skogsra.AppTest do
     end
 
     test "when it's defined in a namespace, gets value" do
-      ApplicationMock.put_env(:app, My.Custom.Namespace, [key: 42])
+      ApplicationMock.put_env(:app, My.Custom.Namespace, key: 42)
 
       env = Env.new(My.Custom.Namespace, :app, :key, [])
 
