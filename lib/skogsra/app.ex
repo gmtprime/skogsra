@@ -14,7 +14,7 @@ defmodule Skogsra.App do
   def get_env(env)
 
   def get_env(%Env{options: options} = env) do
-    if not options[:skip_config], do: do_get_env(env), else: nil
+    if options[:skip_config], do: nil, else: do_get_env(env)
   end
 
   #########

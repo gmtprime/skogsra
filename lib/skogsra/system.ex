@@ -16,7 +16,7 @@ defmodule Skogsra.System do
   def get_env(env)
 
   def get_env(%Env{options: options} = env) do
-    if not options[:skip_system], do: do_get_env(env), else: nil
+    if options[:skip_system], do: nil, else: do_get_env(env)
   end
 
   #########
