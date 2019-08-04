@@ -1,3 +1,12 @@
+# Changelog for 1.3.0
+
+## Enhancements
+
+  * Namespaces now inherit values from default namespace.
+  * Favoring the use of `:persistent_term`s over `:ets` tables. This avoids the
+    creation of an application tree for this project, thus making it even
+    faster.
+
 # Changelog for 1.2.1
 
 ## Bug fixes
