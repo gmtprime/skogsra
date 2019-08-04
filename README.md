@@ -15,6 +15,7 @@ application configuration:
 * Automatic documentation generation for variables.
 * Runtime reloading.
 * Setting variable's values at runtime.
+* Fast cached values access by using `:persistent_term` as temporal storage.
 
 ## Small Example
 
@@ -146,11 +147,19 @@ in `mix.exs`.
   end
   ```
 
-- For Elixir ≥ 1.7 and Erlang ≥ 21
+- For Elixir < 1.8 and ≥ 1.7 and Erlang < 22 and ≥ 21
 
   ```elixir
   def deps do
     [{:skogsra, "~> 1.2"}]
+  end
+  ```
+
+- For Elixir ≥ 1.8 and Erlang ≥ 22
+
+  ```elixir
+  def deps do
+    [{:skogsra, "~> 1.3"}]
   end
   ```
 

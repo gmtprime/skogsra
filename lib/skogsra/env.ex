@@ -4,8 +4,6 @@ defmodule Skogsra.Env do
   """
   alias __MODULE__
 
-  @cache :skogsra_cache
-
   @typedoc """
   Variable namespace.
   """
@@ -66,8 +64,7 @@ defmodule Skogsra.Env do
   @doc """
   Environment variable struct.
   """
-  defstruct cache: @cache,
-            namespace: nil,
+  defstruct namespace: nil,
             app_name: nil,
             keys: [],
             options: []
@@ -76,7 +73,6 @@ defmodule Skogsra.Env do
   Skogsra environment variable.
   """
   @type t :: %Env{
-          cache: cache :: :ets.tab(),
           namespace: namespace :: namespace(),
           app_name: app_name :: app_name(),
           keys: keys :: keys(),
@@ -88,36 +84,23 @@ defmodule Skogsra.Env do
   """
   @spec new(namespace(), app_name(), key(), options()) :: t()
   @spec new(namespace(), app_name(), keys(), options()) :: t()
-  def new(namespace, app_name, keys, options) do
-    cache = get_cache_name()
-    new(cache, namespace, app_name, keys, options)
+  def new(namespace, app_name, keys, options)
+
+  def new(namespace, app_name, key, options) when is_atom(key) do
+    new(namespace, app_name, [key], options)
   end
 
-  @doc false
-  @spec new(:ets.tab(), namespace(), app_name(), key(), options()) :: t()
-  @spec new(:ets.tab(), namespace(), app_name(), keys(), options()) :: t()
-  def new(cache, namespace, app_name, keys, options)
-
-  def new(cache, namespace, app_name, key, options) when is_atom(key) do
-    new(cache, namespace, app_name, [key], options)
-  end
-
-  def new(cache, namespace, app_name, keys, options) when is_list(keys) do
+  def new(namespace, app_name, keys, options) when is_list(keys) do
     namespace = if is_nil(namespace), do: options[:namespace], else: namespace
     options = defaults(options)
 
     %Env{
-      cache: cache,
       namespace: namespace,
       app_name: app_name,
       keys: keys,
       options: options
     }
   end
-
-  @doc false
-  @spec get_cache_name() :: :ets.tab()
-  def get_cache_name, do: @cache
 
   @doc false
   def defaults(options) do
