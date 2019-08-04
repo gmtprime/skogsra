@@ -119,7 +119,7 @@ defmodule Skogsra.Core do
   @spec get_default(Env.t()) :: {:ok, term()} | {:error, term()}
   def get_default(env)
 
-  def get_default(%Env{options: options}) do
+  def get_default(%Env{namespace: nil, options: options}) do
     case {options[:default], options[:required]} do
       {nil, true} ->
         {:error, "Variable is undefined"}
@@ -127,5 +127,9 @@ defmodule Skogsra.Core do
       {value, _} ->
         {:ok, value}
     end
+  end
+
+  def get_default(%Env{} = env) do
+    get_env(%Env{env | namespace: nil})
   end
 end

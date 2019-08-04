@@ -16,6 +16,8 @@ defmodule SkogsraTest do
       app_env :from_default, :my_app, :from_default, default: 42
 
       app_env :reloadable, :my_app, :reloadable, default: 42
+      app_env :reloadable_with_namespace, :my_app, :reloadable_with_namespace,
+        default: 42
 
       app_env :required, :my_app, :required, type: :integer, required: true
     end
@@ -59,9 +61,9 @@ defmodule SkogsraTest do
     end
 
     test "reloads variable's value for a namespace" do
-      assert {:ok, 42} = TestVars.reloadable(Namespace)
-      assert :ok = TestVars.put_reloadable(21, Namespace)
-      assert {:ok, 21} = TestVars.reloadable(Namespace)
+      assert {:ok, 42} = TestVars.reloadable_with_namespace(Namespace)
+      assert :ok = TestVars.put_reloadable_with_namespace(21, Namespace)
+      assert {:ok, 21} = TestVars.reloadable_with_namespace(Namespace)
     end
   end
 end

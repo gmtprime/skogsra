@@ -57,7 +57,13 @@ hostname in the following order:
    config :myapp, Test,
      hostname: "my.custom.test.host"
    ```
-3. From the default value if it exists.
+3. From the OS environment variable `$MYAPP_HOSTNAME`.
+4. From the configuraton file e.g:
+   ```
+   config :myapp,
+     hostname: "my.custom.host"
+   ```
+5. From the default value if it exists.
 
 ## Required variables
 
