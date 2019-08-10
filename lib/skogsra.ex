@@ -143,7 +143,7 @@ defmodule Skogsra do
              Module.get_attribute(__MODULE__, :envdoc)
            )
       @spec unquote(bang!)() :: term() | no_return()
-      @spec unquote(bang!)(Env.namespace()) :: {:ok, term()} | {:error, term()}
+      @spec unquote(bang!)(Env.namespace()) :: term() | no_return()
       def unquote(bang!)(namespace \\ nil)
 
       def unquote(bang!)(namespace) do
