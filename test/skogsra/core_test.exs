@@ -91,7 +91,7 @@ defmodule Skogsra.CoreTest do
     end
 
     test "when there is config, returns it" do
-      env = Env.new(nil, :core_app, :key, [])
+      env = Env.new(nil, :core_app, :key, type: :integer)
 
       ApplicationMock.put_env(:core_app, :key, 42)
 

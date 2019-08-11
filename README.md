@@ -87,28 +87,49 @@ exception.
 
 ## Automatic casting
 
-If the default value is set, the OS environment variable value will be casted
-as the same type of the default value. Otherwise, it is possible to set the
-type for the variable with the option `type`. The available types are
-`:binary` (default), `:integer`, `:float`, `:boolean` and `:atom`.
-Additionally, you can create a function to cast the value and specify it as
-`{module_name, function_name}` e.g:
+If the default value is set, the variable value will be casted as the same type
+of the default value. Otherwise, it is possible to set the type for the
+variable with the option `type`. The available types are `:binary` (default),
+`:integer`, `:float`, `:boolean` and `:atom`. Additionally, you can create a
+`Skogsra.Type` e.g. a naive implementation for casting `"1, 2, 3, 4"` to
+`[1, 2, 3, 4]` would be:
 
 ```elixir
-defmodule MyApp.Settings do
-  use Skogsra
+defmodule MyList do
+  use Skogsra.Type
 
-  @envdoc "My channels"
-  app_env :my_channels, :myapp, :channels,
-    type: {__MODULE__, channels},
-    required: true
+  def cast(value) when is_binary(value) do
+    list =
+      value
+      |> String.split(~r/,/)
+      |> Stream.map(&String.trim/1)
+      |> Enum.map(String.to_integer/1)
+    {:ok, list}
+  end
 
-  def channels(value), do: String.split(value, ", ")
+  def cast(_) do
+    :error
+  end
 end
 ```
 
-If `$MYAPP_CHANNELS`'s value is `"ch0, ch1, ch2"` then the casted value
-will be `["ch0", "ch1", "ch2"]`.
+If then we define the following enviroment variable with `Skogsra`:
+
+```elixir
+defmodule Settings do
+  use Skogsra
+
+  app_env :my_integers, :myapp, :my_integers, type: MyList
+end
+```
+
+We can then set `$MYAPP_INTEGERS`'s value as `"1, 2, 3"` and it'll be casted
+casted to `[1, 2, 3]` when we call `Settings.my_integers/1` function e.g:
+
+```elixir
+iex> Settings.my_integers()
+{:ok, [1, 2, 3]}
+```
 
 ## Setting and reloading variables
 
@@ -161,11 +182,11 @@ in `mix.exs`.
   end
   ```
 
-- For Elixir ≥ 1.8 and Erlang ≥ 22
+- For Elixir < 1.9 and Elixir ≥ 1.8 and Erlang ≥ 22
 
   ```elixir
   def deps do
-    [{:skogsra, "~> 1.3"}]
+    [{:skogsra, "~> 2.0"}]
   end
   ```
 

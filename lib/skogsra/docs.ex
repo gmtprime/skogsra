@@ -3,7 +3,6 @@ defmodule Skogsra.Docs do
   This module defines the documentation generators.
   """
   alias Skogsra.Env
-  alias Skogsra.System
 
   @typedoc """
   Custom docs.
@@ -57,9 +56,9 @@ defmodule Skogsra.Docs do
     The OS environment variables expected are:
 
     - When no namespace is specified, then it'll be
-    `$#{System.gen_env_name(no_namespace)}`.
+    `$#{Env.os_env(no_namespace)}`.
     - When a namespace is specified e.g. `#{Macro.to_string(namespace)}`, then
-    it'll be `$#{System.gen_env_name(with_namespace)}`.
+    it'll be `$#{Env.os_env(with_namespace)}`.
 
     The expected application configuration would be as follows:
 
@@ -163,12 +162,12 @@ defmodule Skogsra.Docs do
   end
 
   @doc false
-  @spec expand(pos_integer(), Env.keys(), Env.options()) :: binary()
+  @spec expand(pos_integer(), Env.keys(), Env.t()) :: binary()
   def expand(indent, keys, env)
 
-  def expand(indent, [key], %Env{options: options} = env) do
-    type = System.get_type(env)
-    default = options[:default]
+  def expand(indent, [key], %Env{} = env) do
+    type = Env.type(env)
+    default = Env.default(env)
 
     if is_nil(default) do
       "#{String.duplicate("  ", indent)}#{key}: #{inspect(type)}()"

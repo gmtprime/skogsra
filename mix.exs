@@ -1,14 +1,14 @@
 defmodule Skogsra.Mixfile do
   use Mix.Project
 
-  @version "1.3.2"
+  @version "2.0.0"
   @root "https://github.com/gmtprime/skogsra"
 
   def project do
     [
       app: :skogsra,
       version: @version,
-      elixir: "~> 1.8",
+      elixir: "~> 1.9",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       name: "Skogsrå",
@@ -30,7 +30,8 @@ defmodule Skogsra.Mixfile do
   defp deps do
     [
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
-      {:credo, "~> 1.1", only: :dev}
+      {:credo, "~> 1.1", only: :dev, runtime: false},
+      {:dialyxir, "~> 1.0.0-rc.6", only: :dev, runtime: false}
     ]
   end
 

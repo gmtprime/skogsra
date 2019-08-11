@@ -2,7 +2,10 @@ defmodule Skogsra.App do
   @moduledoc """
   This module defines the functions to get variables from the configuration.
   """
+  require Logger
+
   alias Skogsra.Env
+  alias Skogsra.Type
 
   ############
   # Public API
@@ -10,38 +13,42 @@ defmodule Skogsra.App do
   @doc """
   Gets config variable value given a `Skogsra.Env` struct.
   """
-  @spec get_env(Env.t()) :: nil | term()
+  @spec get_env(Env.t()) :: term()
   def get_env(env)
 
-  def get_env(%Env{options: options} = env) do
-    if options[:skip_config], do: nil, else: do_get_env(env)
+  def get_env(%Env{} = env) do
+    if Env.skip_config?(env) do
+      nil
+    else
+      do_get_env(env)
+    end
   end
 
   #########
   # Helpers
 
   @doc false
-  @spec do_get_env(Env.t()) :: nil | term()
+  @spec do_get_env(Env.t()) :: term()
   def do_get_env(env)
 
-  def do_get_env(%Env{
-        namespace: nil,
-        app_name: app_name,
-        keys: [key | keys]
-      }) do
-    module = Application.get_env(:skogsra, :application_module, Application)
-    value = apply(module, :get_env, [app_name, key])
-    lookup(value, keys)
+  def do_get_env(
+        %Env{namespace: nil, app_name: app_name, keys: [key | keys]} = env
+      ) do
+    :skogsra
+    |> Application.get_env(:application_module, Application)
+    |> apply(:get_env, [app_name, key])
+    |> lookup(keys)
+    |> cast(env)
   end
 
-  def do_get_env(%Env{
-        namespace: namespace,
-        app_name: app_name,
-        keys: keys
-      }) do
-    module = Application.get_env(:skogsra, :application_module, Application)
-    value = apply(module, :get_env, [app_name, namespace])
-    lookup(value, keys)
+  def do_get_env(
+        %Env{namespace: namespace, app_name: app_name, keys: keys} = env
+      ) do
+    :skogsra
+    |> Application.get_env(:application_module, Application)
+    |> apply(:get_env, [app_name, namespace])
+    |> lookup(keys)
+    |> cast(env)
   end
 
   @doc false
@@ -59,6 +66,27 @@ defmodule Skogsra.App do
   end
 
   def lookup(_, _) do
+    nil
+  end
+
+  @doc false
+  def cast(value, %Env{} = env) do
+    case Type.cast(env, value) do
+      {:ok, value} -> value
+      :error -> fail_cast(value, env)
+    end
+  end
+
+  @doc false
+  @spec fail_cast(term(), Env.t()) :: nil
+  def fail_cast(value, env)
+
+  def fail_cast(value, %Env{} = env) do
+    Logger.warn(
+      "Application variable #{inspect(env)} cannot be " <>
+        "casted from #{inspect(value)}"
+    )
+
     nil
   end
 end

@@ -16,6 +16,7 @@ defmodule SkogsraTest do
       app_env :from_default, :my_app, :from_default, default: 42
 
       app_env :reloadable, :my_app, :reloadable, default: 42
+
       app_env :reloadable_with_namespace, :my_app, :reloadable_with_namespace,
         default: 42
 

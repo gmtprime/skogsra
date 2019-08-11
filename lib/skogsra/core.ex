@@ -5,7 +5,7 @@ defmodule Skogsra.Core do
   alias Skogsra.App
   alias Skogsra.Cache
   alias Skogsra.Env
-  alias Skogsra.System
+  alias Skogsra.Sys
 
   ############
   # Public API
@@ -40,8 +40,8 @@ defmodule Skogsra.Core do
   @spec put_env(Env.t(), term()) :: :ok | {:error, term()}
   def put_env(env, value)
 
-  def put_env(%Env{options: options} = env, value) do
-    if options[:cached] do
+  def put_env(%Env{} = env, value) do
+    if Env.cached?(env) do
       Cache.put_env(env, value)
     else
       {:error, "Cache disable for this variable"}
@@ -54,11 +54,12 @@ defmodule Skogsra.Core do
   @spec reload_env(Env.t()) :: {:ok, term()} | {:error, term()}
   def reload_env(env)
 
-  def reload_env(%Env{options: options} = env) do
-    with {:ok, value} <- get_system(env) do
-      if options[:cached], do: Cache.put_env(env, value)
-      {:ok, value}
-    else
+  def reload_env(%Env{} = env) do
+    case get_system(env) do
+      {:ok, value} ->
+        if Env.cached?(env), do: Cache.put_env(env, value)
+        {:ok, value}
+
       _ ->
         {:error, "Cannot reload the variable. Keeping last value."}
     end
@@ -71,8 +72,8 @@ defmodule Skogsra.Core do
   @spec fsm_entry(Env.t()) :: {:ok, term()} | {:error, term()}
   def fsm_entry(env)
 
-  def fsm_entry(%Env{options: options} = env) do
-    if options[:cached], do: get_cached(env), else: get_system(env)
+  def fsm_entry(%Env{} = env) do
+    if Env.cached?(env), do: get_cached(env), else: get_system(env)
   end
 
   @doc false
@@ -92,7 +93,7 @@ defmodule Skogsra.Core do
   def get_system(env)
 
   def get_system(%Env{} = env) do
-    case System.get_env(env) do
+    case Sys.get_env(env) do
       nil ->
         get_config(env)
 
@@ -119,8 +120,8 @@ defmodule Skogsra.Core do
   @spec get_default(Env.t()) :: {:ok, term()} | {:error, term()}
   def get_default(env)
 
-  def get_default(%Env{namespace: nil, options: options}) do
-    case {options[:default], options[:required]} do
+  def get_default(%Env{namespace: nil} = env) do
+    case {Env.default(env), Env.required?(env)} do
       {nil, true} ->
         {:error, "Variable is undefined"}
 

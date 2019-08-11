@@ -97,6 +97,7 @@ defmodule Skogsra do
      If it's `nil`, then it will try 3.
      3. Return the value of the default value or `nil`.
   """
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   defmacro app_env(function_name, app_name, keys, options \\ []) do
     definition = String.to_atom("__#{function_name}__")
     bang! = String.to_atom("#{function_name}!")

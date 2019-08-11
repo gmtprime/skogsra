@@ -1,3 +1,11 @@
+# Changelog for 2.0.0
+
+## Enhancements
+
+  * Added `Skogsra.Type` behaviour for defining custom types.
+  * Application configuration values are now casted as well to the defined
+    type in the `Skogsra` environment variable definition.
+
 # Changelog for 1.3.0
 
 ## Enhancements

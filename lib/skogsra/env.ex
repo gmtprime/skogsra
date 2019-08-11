@@ -33,7 +33,7 @@ defmodule Skogsra.Env do
           | :float
           | :boolean
           | :atom
-          | {module(), atom()}
+          | module()
 
   @typedoc """
   Environment variable options.
@@ -102,6 +102,87 @@ defmodule Skogsra.Env do
     }
   end
 
+  @doc """
+  Whether the `Skogsra` environment variable should skip system or not.
+  """
+  @spec skip_system?(t()) :: boolean()
+  def skip_system?(%Env{options: options}) do
+    case options[:skip_system] do
+      true -> true
+      _ -> false
+    end
+  end
+
+  @doc """
+  Whether the `Skogsra` environment variable should skip config or not.
+  """
+  @spec skip_config?(t()) :: boolean()
+  def skip_config?(%Env{options: options}) do
+    case options[:skip_config] do
+      true -> true
+      _ -> false
+    end
+  end
+
+  @doc """
+  Gets the OS variable name for the `Skogsra` environment variable.
+  """
+  @spec os_env(t()) :: binary()
+  def os_env(%Env{options: options} = env) do
+    with value when not is_binary(value) <- options[:os_env] do
+      namespace = gen_namespace(env)
+      app_name = gen_app_name(env)
+      keys = gen_keys(env)
+
+      "#{namespace}#{app_name}_#{keys}"
+    end
+  end
+
+  @doc """
+  Gets the type of the `Skogsra` environment variable.
+  """
+  @spec type(t()) :: type()
+  def type(%Env{options: options} = env) do
+    with nil <- options[:type] do
+      env
+      |> default()
+      |> get_type()
+    end
+  end
+
+  @doc """
+  Gets the default value for a `Skogsra` environment variable.
+  """
+  @spec default(t()) :: term()
+  def default(%Env{options: options}) do
+    options[:default]
+  end
+
+  @doc """
+  Whether the `Skogsra` environment variable is required or not.
+  """
+  @spec required?(t()) :: boolean()
+  def required?(%Env{options: options}) do
+    case options[:required] do
+      true -> true
+      _ -> false
+    end
+  end
+
+  @doc """
+  Whether the `Skogsra` environment variable is cached or not.
+  """
+  @spec cached?(t()) :: boolean()
+  def cached?(%Env{options: options}) do
+    case options[:cached] do
+      false -> false
+      _ -> true
+    end
+  end
+
+  #########
+  # Helpers
+
   @doc false
   def defaults(options) do
     options
@@ -110,4 +191,55 @@ defmodule Skogsra.Env do
     |> Keyword.put_new(:required, false)
     |> Keyword.put_new(:cached, true)
   end
+
+  @doc false
+  @spec gen_namespace(t()) :: binary()
+  def gen_namespace(env)
+
+  def gen_namespace(%Env{namespace: nil}) do
+    ""
+  end
+
+  def gen_namespace(%Env{namespace: namespace}) do
+    value =
+      namespace
+      |> Module.split()
+      |> Stream.map(&String.upcase/1)
+      |> Enum.join("_")
+
+    "#{value}_"
+  end
+
+  @doc false
+  @spec gen_app_name(t()) :: binary()
+  def gen_app_name(env)
+
+  def gen_app_name(%Env{app_name: app_name}) do
+    app_name
+    |> Atom.to_string()
+    |> String.upcase()
+  end
+
+  @doc false
+  @spec gen_keys(t()) :: binary()
+  def gen_keys(env)
+
+  def gen_keys(%Env{keys: keys}) do
+    keys
+    |> Stream.map(&Atom.to_string/1)
+    |> Stream.map(&String.upcase/1)
+    |> Enum.join("_")
+  end
+
+  @doc false
+  @spec get_type(term()) :: type()
+  def get_type(value)
+
+  def get_type(nil), do: :binary
+  def get_type(value) when is_binary(value), do: :binary
+  def get_type(value) when is_integer(value), do: :integer
+  def get_type(value) when is_float(value), do: :float
+  def get_type(value) when is_boolean(value), do: :boolean
+  def get_type(value) when is_atom(value), do: :atom
+  def get_type(_), do: :binary
 end
