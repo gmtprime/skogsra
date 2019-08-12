@@ -204,7 +204,7 @@ config_providers: [{Skogsra.Provider.Yaml, ["/path/to/config/file.yml"]}]
 The package can be installed by adding `skogsra` to your list of dependencies
 in `mix.exs`.
 
-- For Elixir ≥ 1.9 and Erlang ≥ 22
+- For Elixir ≥ 1.8 and Erlang ≥ 22
 
   ```elixir
   def deps do

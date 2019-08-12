@@ -1,4 +1,4 @@
-if Code.ensure_loaded?(:yamerl) do
+if Code.ensure_loaded?(Config.Provider) and Code.ensure_loaded?(:yamerl) do
   defmodule Skogsra.Provider.Yaml do
     @moduledoc """
     This module defines a YAML config provider for Skogsra.
