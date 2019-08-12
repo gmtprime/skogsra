@@ -29,6 +29,7 @@ defmodule Skogsra.Mixfile do
 
   defp deps do
     [
+      {:yamerl, "~> 0.7", optional: true},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:credo, "~> 1.1", only: :dev, runtime: false},
       {:dialyxir, "~> 1.0.0-rc.6", only: :dev, runtime: false}
@@ -81,11 +82,15 @@ defmodule Skogsra.Mixfile do
         ],
         Generalizations: [
           Skogsra.App,
-          Skogsra.System,
-          Skogsra.Cache
+          Skogsra.Sys,
+          Skogsra.Cache,
+          Skogsra.Type
         ],
         "Documentation Generation": [
           Skogsra.Docs
+        ],
+        "Config Providers": [
+          Skogsra.Provider.Yaml
         ]
       ]
     ]

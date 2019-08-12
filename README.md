@@ -16,6 +16,7 @@ application configuration:
 * Runtime reloading.
 * Setting variable's values at runtime.
 * Fast cached values access by using `:persistent_term` as temporal storage.
+* YAML configuration provider for Elixir releases.
 
 ## Small Example
 
@@ -161,32 +162,64 @@ other files using the command `load_hab <extension>` e.g. loading
 [SUCCESS]  Loaded hab [/home/user/my_project/.envrc.prod]
 ```
 
+## YAML Config Provider
+
+`Skogsra` includes a simple YAML configuration provider compatible with
+`mix release` for Elixir ≥ 1.9.
+
+The following is the supported configuration format:
+
+```yaml
+# file: /etc/my_app/config.yml
+- app: "my_app"              # Name of the application.
+  namespace: "MyApp.Repo"    # Optional namespace.
+  config:                    # Actual configuration.
+    - database: "my_app_db"
+      username: "postgres"
+      password: "postgres"
+      hostname: "localhost"
+      port: 5432
+```
+
+The previous configuration file would translate to:
+
+```elixir
+config :my_app, MyApp.Repo,
+  database: "my_App_db",
+  username: "postgres"
+  password: "postgres"
+  hostname: "localhost"
+  port: 5432
+```
+
+For using this config provider, just add the following to your release
+configuration:
+
+```elixir
+config_providers: [{Skogsra.Provider.Yaml, ["/path/to/config/file.yml"]}]
+```
+
 ## Installation
 
 The package can be installed by adding `skogsra` to your list of dependencies
 in `mix.exs`.
 
-- For Elixir < 1.7 and Erlang < 21:
-
-  ```elixir
-  def deps do
-    [{:skogsra, "~> 1.0.4"}]
-  end
-  ```
-
-- For Elixir < 1.8 and ≥ 1.7 and Erlang < 22 and ≥ 21
-
-  ```elixir
-  def deps do
-    [{:skogsra, "~> 1.2"}]
-  end
-  ```
-
-- For Elixir < 1.9 and Elixir ≥ 1.8 and Erlang ≥ 22
+- For Elixir ≥ 1.9 and Erlang ≥ 22
 
   ```elixir
   def deps do
     [{:skogsra, "~> 2.0"}]
+  end
+  ```
+
+- For Elixir ≥ 1.9, Erlang ≥ 22 and YAML config provider support:
+
+  ```elixir
+  def deps do
+    [
+      {:skogsra, "~> 2.0"},
+      {:yamerl, "~> 0.7"}
+    ]
   end
   ```
 
