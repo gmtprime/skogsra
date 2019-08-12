@@ -22,74 +22,76 @@ if Code.ensure_loaded?(Config.Provider) do
     describe "load/2" do
       test "reads a YAML without a namespace" do
         path = "./test/support/fixtures/without_namespace.yml"
-        assert [
-          yggdrasil: [
-            rabbitmq: [
-              username: "rabbitmq_username",
-              password: "rabbitmq_password"
-            ],
-            postgres: [
-              username: "postgres_username",
-              password: "postgres_password"
-            ],
-            redis: [
-              password: "redis_password"
-            ]
 
-          ]
-        ] = Yaml.load([], path)
+        assert [
+                 yggdrasil: [
+                   rabbitmq: [
+                     username: "rabbitmq_username",
+                     password: "rabbitmq_password"
+                   ],
+                   postgres: [
+                     username: "postgres_username",
+                     password: "postgres_password"
+                   ],
+                   redis: [
+                     password: "redis_password"
+                   ]
+                 ]
+               ] = Yaml.load([], path)
       end
 
       test "reads a YAML with a namespace" do
         path = "./test/support/fixtures/with_namespace.yml"
+
         assert [
-          yggdrasil: [
-            {
-              MyApp.Namespace,
-              [
-                rabbitmq: [
-                  username: "rabbitmq_username",
-                  password: "rabbitmq_password"
-                ],
-                postgres: [
-                  username: "postgres_username",
-                  password: "postgres_password"
-                ],
-                redis: [
-                  password: "redis_password"
-                ]
-              ]
-            }
-          ]
-        ] = Yaml.load([], path)
+                 yggdrasil: [
+                   {
+                     MyApp.Namespace,
+                     [
+                       rabbitmq: [
+                         username: "rabbitmq_username",
+                         password: "rabbitmq_password"
+                       ],
+                       postgres: [
+                         username: "postgres_username",
+                         password: "postgres_password"
+                       ],
+                       redis: [
+                         password: "redis_password"
+                       ]
+                     ]
+                   }
+                 ]
+               ] = Yaml.load([], path)
       end
 
       test "reads a YAML with several apps" do
         path = "./test/support/fixtures/several_apps.yml"
+
         assert [
-          yggdrasil: [
-            {
-              MyApp.Namespace,
-              [
-                rabbitmq: [
-                  username: "rabbitmq_username",
-                  password: "rabbitmq_password",
-                  hostname: "localhost",
-                  port: 7652
-                ]
-              ]
-            }
-          ],
-          skogsra: [
-            {
-              MyApp.Namespace,
-              [
-                system_module: "Sys",
-                application_module: "App"
-              ]
-            }
-          ]
-        ] = Yaml.load([], path)
+                 yggdrasil: [
+                   {
+                     MyApp.Namespace,
+                     [
+                       rabbitmq: [
+                         username: "rabbitmq_username",
+                         password: "rabbitmq_password",
+                         hostname: "localhost",
+                         port: 7652
+                       ]
+                     ]
+                   }
+                 ],
+                 skogsra: [
+                   {
+                     MyApp.Namespace,
+                     [
+                       system_module: "Sys",
+                       application_module: "App"
+                     ]
+                   }
+                 ]
+               ] = Yaml.load([], path)
       end
 
       test "returns same config if the configuration is not found" do

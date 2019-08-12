@@ -125,17 +125,18 @@ if Code.ensure_loaded?(Config.Provider) and Code.ensure_loaded?(:yamerl) do
     # Gets namespace for an app.
     @spec get_namespace(list()) :: {:ok, module()} | {:error, term()}
     defp get_namespace(nodes) do
-      with value when not is_nil(value) <- get_key(nodes, 'namespace') do
-        value =
-          value
-          |> List.to_string()
-          |> String.split(~r/\./)
-          |> Module.concat()
-
-        {:ok, value}
-      else
+      case get_key(nodes, 'namespace') do
         nil ->
           {:ok, nil}
+
+        value ->
+          value =
+            value
+            |> List.to_string()
+            |> String.split(~r/\./)
+            |> Module.concat()
+
+          {:ok, value}
       end
     rescue
       _ ->
