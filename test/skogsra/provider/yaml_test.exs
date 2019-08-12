@@ -91,6 +91,11 @@ defmodule Skogsra.Provider.YamlTest do
       ] = Yaml.load([], path)
     end
 
+    test "returns same config if the configuration is not found" do
+      path = "./test/support/fixtures/unexistent_file.yml"
+      assert [] = Yaml.load([], path)
+    end
+
     test "returns same config if an app name is not defined" do
       path = "./test/support/fixtures/no_app_name.yml"
       assert [] = Yaml.load([], path)
