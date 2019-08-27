@@ -1,4 +1,4 @@
-- app: "skosra"
+- app: "skogsra"
   module: "Skogsra"
   config:
     - system_module: "System"
