@@ -53,7 +53,7 @@ if Code.ensure_loaded?(Config.Provider) do
                      ]
                    }
                  ]
-              ] = Yaml.load([], path)
+               ] = Yaml.load([], path)
       end
 
       test "reads a YAML with a namespace" do
