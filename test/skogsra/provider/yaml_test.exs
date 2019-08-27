@@ -40,6 +40,22 @@ if Code.ensure_loaded?(Config.Provider) do
                ] = Yaml.load([], path)
       end
 
+      test "reads a YAML with a module" do
+        path = "./test/support/fixtures/with_module.yml"
+
+        assert [
+                 skogsra: [
+                   {
+                     Skogsra,
+                     [
+                       system_module: "System",
+                       application_module: "Application"
+                     ]
+                   }
+                 ]
+              ] = Yaml.load([], path)
+      end
+
       test "reads a YAML with a namespace" do
         path = "./test/support/fixtures/with_namespace.yml"
 

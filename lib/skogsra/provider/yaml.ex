@@ -11,7 +11,7 @@ if Code.ensure_loaded?(Config.Provider) and Code.ensure_loaded?(:yamerl) do
     ```yaml
     # file: /etc/my_app/config.yml
     - app: "my_app"
-      namespace: "MyApp.Repo"
+      module: "MyApp.Repo"
       config:
       - database: "my_app_db"
         username: "postgres"
@@ -99,11 +99,14 @@ if Code.ensure_loaded?(Config.Provider) and Code.ensure_loaded?(:yamerl) do
     defp load_app_config(config) do
       with {:ok, app} <- get_app(config),
            {:ok, namespace} <- get_namespace(config),
-           {:ok, config} <- get_config(config) do
-        if is_nil(namespace) do
-          {:ok, [{app, config}]}
+           {:ok, module} <- get_module(config),
+           {:ok, app_config} <- get_config(config) do
+        module = module || namespace
+
+        if is_nil(module) do
+          {:ok, [{app, app_config}]}
         else
-          {:ok, [{app, [{namespace, config}]}]}
+          {:ok, [{app, [{module, app_config}]}]}
         end
       end
     end
@@ -141,6 +144,27 @@ if Code.ensure_loaded?(Config.Provider) and Code.ensure_loaded?(:yamerl) do
     rescue
       _ ->
         {:error, "Namespace is invalid"}
+    end
+
+    # Gets module to be configured.
+    @spec get_module(list()) :: {:ok, module()} | {:error, term()}
+    defp get_module(nodes) do
+      case get_key(nodes, 'module') do
+        nil ->
+          {:ok, nil}
+
+        value ->
+          value =
+            value
+            |> List.to_string()
+            |> String.split(~r/\./)
+            |> Module.safe_concat()
+
+          {:ok, value}
+      end
+    rescue
+      _ ->
+        {:error, "Module is invalid"}
     end
 
     # Gets config key for an app.

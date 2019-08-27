@@ -172,7 +172,7 @@ The following is the supported configuration format:
 ```yaml
 # file: /etc/my_app/config.yml
 - app: "my_app"              # Name of the application.
-  namespace: "MyApp.Repo"    # Optional namespace.
+  module: "MyApp.Repo"       # Optional module/namespace.
   config:                    # Actual configuration.
     - database: "my_app_db"
       username: "postgres"
@@ -198,6 +198,10 @@ configuration:
 ```elixir
 config_providers: [{Skogsra.Provider.Yaml, ["/path/to/config/file.yml"]}]
 ```
+
+> **Note**: If the `module` you're using in you're config does not exist, then
+> change it to `namespace` e.g: `namespace: "MyApp.Repo"`. Otherwise, it will
+> fail loading it.
 
 ## Installation
 
