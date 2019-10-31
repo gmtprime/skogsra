@@ -1,3 +1,10 @@
+# Changelog for 2.0.2
+
+## Enhancements
+
+  * Added `:module` built-in type.
+  * Added `:unsafe_module` built-in type.
+
 # Changelog for 2.0.0
 
 ## Enhancements
