@@ -36,6 +36,18 @@ defmodule Skogsra.TypeTest do
       assert {:ok, :foo} = Type.cast(env, "foo")
     end
 
+    test "casts a module" do
+      env = %Env{options: [type: :module]}
+
+      assert {:ok, Skogsra.Type} = Type.cast(env, "Skogsra.Type")
+    end
+
+    test "casts an unsafe module" do
+      env = %Env{options: [type: :unsafe_module]}
+
+      assert {:ok, Foo} = Type.cast(env, "Foo")
+    end
+
     test "casts a custom type" do
       defmodule CustomType do
         use Skogsra.Type
@@ -141,6 +153,47 @@ defmodule Skogsra.TypeTest do
 
     test "errors when is a binary for a non existing atom" do
       assert :error = Type.cast_atom("FOO")
+    end
+
+    test "errors when is not binary or atom" do
+      assert :error = Type.cast_atom(42)
+    end
+  end
+
+  describe "cast_module/1" do
+    test "casts when is module" do
+      assert {:ok, Skogsra.Type} = Type.cast_module(Skogsra.Type)
+    end
+
+    test "errors when is not an existing module" do
+      assert :error = Type.cast_module(Foo)
+    end
+
+    test "casts when the string is an existing module" do
+      assert {:ok, Skogsra.Type} = Type.cast_module("Skogsra.Type")
+    end
+
+    test "errors when the string ins not an existing module" do
+      assert :error = Type.cast_module("Foo")
+    end
+
+    test "errors when is not an atom or a binary" do
+      assert :error = Type.cast_module(42)
+    end
+  end
+
+  describe "cast_unsafe_module/1" do
+    test "casts when is module" do
+      assert {:ok, Skogsra.Type} = Type.cast_unsafe_module(Skogsra.Type)
+    end
+
+    test "casts when is a binary that can be a module" do
+      assert {:ok, Skogsra.Type} = Type.cast_unsafe_module("Skogsra.Type")
+      assert {:ok, Foo} = Type.cast_unsafe_module("Foo")
+    end
+
+    test "errors when is not an atom or a binary" do
+      assert :error = Type.cast_unsafe_module(42)
     end
   end
 end

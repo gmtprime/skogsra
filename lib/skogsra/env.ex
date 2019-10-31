@@ -25,7 +25,7 @@ defmodule Skogsra.Env do
   @type keys :: [key()]
 
   @typedoc """
-  Types
+  Types.
   """
   @type type ::
           :binary
@@ -33,6 +33,8 @@ defmodule Skogsra.Env do
           | :float
           | :boolean
           | :atom
+          | :module
+          | :unsafe_module
           | module()
 
   @typedoc """

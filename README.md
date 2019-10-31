@@ -90,10 +90,20 @@ exception.
 
 If the default value is set, the variable value will be casted as the same type
 of the default value. Otherwise, it is possible to set the type for the
-variable with the option `type`. The available types are `:binary` (default),
-`:integer`, `:float`, `:boolean` and `:atom`. Additionally, you can create a
-`Skogsra.Type` e.g. a naive implementation for casting `"1, 2, 3, 4"` to
-`[1, 2, 3, 4]` would be:
+variable with the option `type`. The available types are:
+ - `:binary` (default).
+ - `:integer`.
+ - `:float`.
+ - `:boolean`.
+ - `:atom`.
+ - `:module` (modules loaded in the system).
+ - `:unsafe_module` (modules that might or might not be loaded in the system)
+
+> **Note:** `:module` and `:unsafe_module` types cannot be derived from the
+> default value type, so they need to be explicitly specified.
+
+Additionally, you can create a `Skogsra.Type` e.g. a naive implementation for
+casting `"1, 2, 3, 4"` to `[1, 2, 3, 4]` would be:
 
 ```elixir
 defmodule MyList do
@@ -140,25 +150,25 @@ It's possible to set a value for the variable at runtime with e.g.
 Also, for debugging purposes is possible to reload variables at runtime with
 e.g. `MyApp.Settings.reload_my_hostname()`.
 
-## Using with _Hab_
+## Using with `Hab`
 
 [_Hab_](https://github.com/alexdesousa/hab) is an
 [Oh My ZSH](https://github.com/robbyrussell/oh-my-zsh) plugin for loading OS
 environment variables automatically.
 
-By default, _Hab_ will try to load `.envrc` file, but it's possible to have
+By default, `Hab` will try to load `.envrc` file, but it's possible to have
 several of those files for different purposes e.g:
 
 - `.envrc.prod` for production OS variables.
 - `.envrc.test` for testing OS variables.
 - `.envrc` for development variables.
 
-_Hab_ will load the development variables by default, but it can load the
-other files using the command `load_hab <extension>` e.g. loading
+`Hab` will load the development variables by default, but it can load the
+other files using the command `hab_load <extension>` e.g. loading
 `.envrc.prod` would be as follows:
 
 ```bash
-~/my_project $ load_hab prod
+~/my_project $ hab_load prod
 [SUCCESS]  Loaded hab [/home/user/my_project/.envrc.prod]
 ```
 
