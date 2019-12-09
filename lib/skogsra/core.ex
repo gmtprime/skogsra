@@ -123,7 +123,7 @@ defmodule Skogsra.Core do
   def get_default(%Env{namespace: nil} = env) do
     case {Env.default(env), Env.required?(env)} do
       {nil, true} ->
-        {:error, "Variable is undefined"}
+        {:error, format_missing_var_error(env)}
 
       {value, _} ->
         {:ok, value}
@@ -132,5 +132,14 @@ defmodule Skogsra.Core do
 
   def get_default(%Env{} = env) do
     get_env(%Env{env | namespace: nil})
+  end
+
+  defp format_missing_var_error(env) do
+    keys = Enum.join(env.keys, ", ")
+    if length(env.keys) > 1 do
+      "Variables #{keys} in app #{env.app_name} are undefined"
+    else
+      "Variable #{keys} in app #{env.app_name} is undefined"
+    end
   end
 end
