@@ -1,3 +1,15 @@
+# Changelog for 2.0.4
+
+## Enhancements
+
+  * Improved documentation.
+
+# Changelog for 2.0.3
+
+## Enhancements
+
+  * Improved errors when a variable is missing.
+
 # Changelog for 2.0.2
 
 ## Enhancements
