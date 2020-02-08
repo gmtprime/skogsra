@@ -136,6 +136,7 @@ defmodule Skogsra.Core do
 
   defp format_missing_var_error(env) do
     keys = Enum.join(env.keys, ", ")
+
     if length(env.keys) > 1 do
       "Variables #{keys} in app #{env.app_name} are undefined"
     else
