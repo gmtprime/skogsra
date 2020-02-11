@@ -1,3 +1,13 @@
+# Changelog for 2.1.0
+
+## Enhancements
+
+  * Improved function specs.
+  * Improved generated docs.
+  * Added option to avoid automatically generated docs.
+  * Added function for OS environment variable generation for Unix, Releases
+    and Windows.
+
 # Changelog for 2.0.4
 
 ## Enhancements

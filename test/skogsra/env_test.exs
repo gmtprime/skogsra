@@ -1,5 +1,5 @@
 defmodule Skogsra.EnvTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Skogsra.Env
 
@@ -67,6 +67,12 @@ defmodule Skogsra.EnvTest do
       env = Env.new(My.Custom.Namespace, :app, [:a, :b], [])
 
       assert "MY_CUSTOM_NAMESPACE_APP_A_B" == Env.os_env(env)
+    end
+
+    test "when skips system, returns empty string" do
+      env = Env.new(nil, :app, [:a, :b], os_env: "FOO", skip_system: true)
+
+      assert "" == Env.os_env(env)
     end
   end
 

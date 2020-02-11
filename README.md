@@ -12,7 +12,8 @@ application configuration:
 
 * Variable defaults.
 * Automatic type casting of values.
-* Automatic documentation generation for variables.
+* Automatic docs and spec generation.
+* OS environment template generation.
 * Runtime reloading.
 * Setting variable's values at runtime.
 * Fast cached values access by using `:persistent_term` as temporal storage.
@@ -68,6 +69,9 @@ Additional topics:
 - [Caching variables](#caching-variables).
 - [Handling different environments](#handling-different-environments).
 - [Setting and reloading variables](#setting-and-reloading-variables).
+- [Automatic docs generation](#automatic-docs-generation).
+- [Automatic spec generation](#automatic-spec-generation).
+- [Automatic template generation](#automatic-template.generation).
 - [YAML Config Provider](#yaml-config-provider).
 - [Using with Hab](#using-with-hab).
 - [Installation](#installation).
@@ -92,7 +96,7 @@ defmodule MyApp.Config do
   use Skogsra
 
   @envdoc "My environment"
-  app_env :my_environmen, :myapp, :environment,
+  app_env :my_environment, :myapp, :environment,
     default: :prod
 end
 ```
@@ -360,6 +364,105 @@ will have the functions:
 - `MyApp.Config.reload_my_port/` for reloading the value of the variable at
   runtime.
 
+## Automatic docs generation
+
+It's possible to document a configuration variables using the module attribute
+`@envdoc` e.g:
+
+```elixir
+defmodule MyApp.Config do
+  use Skogsra
+
+  @envdoc "My port"
+  app_env :my_port, :myapp, :port,
+    default: 4000
+end
+```
+
+Skogsra then will automatically generate instructions on how to use the
+variable. This extra documentation can be disable with the following:
+
+```elixir
+config :skogsra,
+  generate_docs: false
+```
+
+> **Note**: for "private" configuration variables you can use `@envdoc false`.
+
+## Automatic spec generation
+
+Skogsra will try to generate the appropriate spec for every function generated.
+In our example, given the default value is an integer, the function spec will be
+the following:
+
+```elixir
+@spec my_port() :: {:ok, integer()} | {:error, binary()}
+@spec my_port(Skogsra.Env.namespace()) ::
+        {:ok, integer()} | {:error, binary()}
+```
+
+> **Note**: The same applies for `my_port!/0`, `reload_my_port/0` and
+> `put_my_port/1`.
+
+## Automatic template generation
+
+Every Skogsra module includes the functions `template/1` and `template/2` for
+generating OS environment variable files e.g. continuing our example:
+
+```elixir
+defmodule MyApp.Config do
+  use Skogsra
+
+  @envdoc "My port"
+  app_env :my_port, :myapp, :port,
+    default: 4000
+end
+```
+
+- For Elixir releases:
+
+  ```elixir
+  iex(1)> Myapp.Config.template("env")
+  :ok
+  ```
+
+  will generate the file `env` with the following contents:
+
+  ```bash
+  # DOCS My port
+  # TYPE integer
+  MYAPP_PORT="Elixir.Application"
+  ```
+- For Unix:
+
+  ```elixir
+  iex(1)> Myapp.Config.template("env", type: :unix)
+  :ok
+  ```
+
+  will generate the file `env` with the following contents:
+
+  ```bash
+  # DOCS My port
+  # TYPE integer
+  export MYAPP_PORT='Elixir.Application'
+  ```
+
+- For Windows:
+
+  ```elixir
+  iex(1)> Myapp.Config.template("env.bat", type: :windows)
+  :ok
+  ```
+
+  will generate the file `env.bat` with the following contents:
+
+  ```bat
+  :: DOCS My port
+  :: TYPE integer
+  SET MYAPP_PORT="Elixir.Application"
+  ```
+
 ## YAML Config Provider
 
 `Skogsra` includes a simple YAML configuration provider compatible with
@@ -432,7 +535,7 @@ in `mix.exs`.
 
   ```elixir
   def deps do
-    [{:skogsra, "~> 2.0"}]
+    [{:skogsra, "~> 2.1"}]
   end
   ```
 
@@ -441,7 +544,7 @@ in `mix.exs`.
   ```elixir
   def deps do
     [
-      {:skogsra, "~> 2.0"},
+      {:skogsra, "~> 2.1"},
       {:yamerl, "~> 0.7"}
     ]
   end

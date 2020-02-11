@@ -15,13 +15,58 @@ defmodule Skogsra do
   alias Skogsra.Core
   alias Skogsra.Docs
   alias Skogsra.Env
+  alias Skogsra.Spec
+  alias Skogsra.Template
 
   @doc """
+  Imports `app_env/3` and `app_env/4`. Additionally generates the function
+  `template(`
   For now is just equivalent to use `import Skogsra`.
   """
   defmacro __using__(_) do
     quote do
-      import Skogsra
+      import Skogsra, only: [app_env: 3, app_env: 4]
+
+      Module.register_attribute(__MODULE__, :definitions, accumulate: true)
+
+      @before_compile Skogsra
+    end
+  end
+
+  @doc false
+  defmacro __before_compile__(_env) do
+    quote do
+      @doc """
+      Creates a template for OS environment variables given a `filename`.
+      Additionally, it can receive a list of options:
+
+      - `type`: What kind of file it will generate (`:elixir`, `:unix`,
+        `:windows`).
+      - `namespace`: Namespace for the variables.
+      """
+      @spec template(Path.t()) :: :ok | {:error, File.posix()}
+      @spec template(Path.t(), keyword()) :: :ok | {:error, File.posix()}
+      def template(filename, options \\ [])
+
+      def template(filename, options) do
+        options
+        |> __get_definitions__()
+        |> Template.generate(filename)
+      end
+
+      defp __get_definitions__(options) do
+        namespace = options[:namespace]
+        type = options[:type] || :elixir
+
+        @definitions
+        |> Stream.map(fn {docs, name} ->
+          {docs, apply(__MODULE__, name, [namespace])}
+        end)
+        |> Stream.filter(fn {docs, _env} -> docs != false end)
+        |> Stream.filter(fn {_docs, env} -> Env.os_env(env) != "" end)
+        |> Stream.map(fn {docs, env} -> %{docs: docs, env: env, type: type} end)
+        |> Enum.map(&Template.new(&1))
+      end
     end
   end
 
@@ -103,6 +148,12 @@ defmodule Skogsra do
     put = String.to_atom("put_#{function_name}")
 
     quote do
+      Module.put_attribute(
+        __MODULE__,
+        :definitions,
+        {Module.get_attribute(__MODULE__, :envdoc, false), unquote(definition)}
+      )
+
       @doc false
       @spec unquote(definition)() :: Env.t()
       @spec unquote(definition)(namespace :: Env.namespace()) :: Env.t()
@@ -122,11 +173,9 @@ defmodule Skogsra do
              unquote(app_name),
              unquote(keys),
              unquote(options),
-             Module.get_attribute(__MODULE__, :envdoc)
+             Module.get_attribute(__MODULE__, :envdoc, false)
            )
-      @spec unquote(function_name)() :: {:ok, term()} | {:error, term()}
-      @spec unquote(function_name)(Env.namespace()) ::
-              {:ok, term()} | {:error, term()}
+      unquote(Spec.gen_full_spec(function_name, options))
       def unquote(function_name)(namespace \\ nil)
 
       def unquote(function_name)(namespace) do
@@ -139,10 +188,9 @@ defmodule Skogsra do
       @doc Docs.gen_short_docs(
              __MODULE__,
              unquote(function_name),
-             Module.get_attribute(__MODULE__, :envdoc)
+             Module.get_attribute(__MODULE__, :envdoc, false)
            )
-      @spec unquote(bang!)() :: term() | no_return()
-      @spec unquote(bang!)(Env.namespace()) :: term() | no_return()
+      unquote(Spec.gen_bang_spec(bang!, options))
       def unquote(bang!)(namespace \\ nil)
 
       def unquote(bang!)(namespace) do
@@ -151,10 +199,12 @@ defmodule Skogsra do
       end
 
       # Reloads the variable.
-      @doc Docs.gen_reload_docs(__MODULE__, unquote(function_name))
-      @spec unquote(reload)() :: {:ok, term()} | {:error, term()}
-      @spec unquote(reload)(Env.namespace()) ::
-              {:ok, term()} | {:error, term()}
+      @doc Docs.gen_reload_docs(
+             __MODULE__,
+             unquote(function_name),
+             Module.get_attribute(__MODULE__, :envdoc, false)
+           )
+      unquote(Spec.gen_reload_spec(reload, options))
       def unquote(reload)(namespace \\ nil)
 
       def unquote(reload)(namespace) do
@@ -163,9 +213,12 @@ defmodule Skogsra do
       end
 
       # Puts a new value to a variable.
-      @doc Docs.gen_put_docs(__MODULE__, unquote(function_name))
-      @spec unquote(put)(term()) :: :ok | {:error, term()}
-      @spec unquote(put)(term(), Env.namespace()) :: :ok | {:error, term()}
+      @doc Docs.gen_put_docs(
+             __MODULE__,
+             unquote(function_name),
+             Module.get_attribute(__MODULE__, :envdoc, false)
+           )
+      unquote(Spec.gen_put_spec(put, options))
       def unquote(put)(value, namespace \\ nil)
 
       def unquote(put)(value, namespace) do

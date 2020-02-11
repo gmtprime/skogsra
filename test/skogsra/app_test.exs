@@ -1,5 +1,5 @@
 defmodule Skogsra.AppTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Skogsra.App
   alias Skogsra.Env

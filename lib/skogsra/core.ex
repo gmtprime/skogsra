@@ -13,7 +13,7 @@ defmodule Skogsra.Core do
   @doc """
   Gets the value of a given `env`.
   """
-  @spec get_env(Env.t()) :: {:ok, term()} | {:error, term()}
+  @spec get_env(Env.t()) :: {:ok, term()} | {:error, binary()}
   def get_env(env)
 
   def get_env(%Env{} = env), do: fsm_entry(env)
@@ -37,7 +37,7 @@ defmodule Skogsra.Core do
   @doc """
   Puts a new value for an `env`.
   """
-  @spec put_env(Env.t(), term()) :: :ok | {:error, term()}
+  @spec put_env(Env.t(), term()) :: :ok | {:error, binary()}
   def put_env(env, value)
 
   def put_env(%Env{} = env, value) do
@@ -51,7 +51,7 @@ defmodule Skogsra.Core do
   @doc """
   Reloads an `env` variable.
   """
-  @spec reload_env(Env.t()) :: {:ok, term()} | {:error, term()}
+  @spec reload_env(Env.t()) :: {:ok, term()} | {:error, binary()}
   def reload_env(env)
 
   def reload_env(%Env{} = env) do
@@ -69,7 +69,7 @@ defmodule Skogsra.Core do
   # Helpers
 
   @doc false
-  @spec fsm_entry(Env.t()) :: {:ok, term()} | {:error, term()}
+  @spec fsm_entry(Env.t()) :: {:ok, term()} | {:error, binary()}
   def fsm_entry(env)
 
   def fsm_entry(%Env{} = env) do
@@ -77,7 +77,7 @@ defmodule Skogsra.Core do
   end
 
   @doc false
-  @spec get_cached(Env.t()) :: {:ok, term()} | {:error, term()}
+  @spec get_cached(Env.t()) :: {:ok, term()} | {:error, binary()}
   def get_cached(env)
 
   def get_cached(%Env{} = env) do
@@ -89,7 +89,7 @@ defmodule Skogsra.Core do
   end
 
   @doc false
-  @spec get_system(Env.t()) :: {:ok, term()} | {:error, term()}
+  @spec get_system(Env.t()) :: {:ok, term()} | {:error, binary()}
   def get_system(env)
 
   def get_system(%Env{} = env) do
@@ -103,7 +103,7 @@ defmodule Skogsra.Core do
   end
 
   @doc false
-  @spec get_config(Env.t()) :: {:ok, term()} | {:error, term()}
+  @spec get_config(Env.t()) :: {:ok, term()} | {:error, binary()}
   def get_config(env)
 
   def get_config(%Env{} = env) do
@@ -117,7 +117,7 @@ defmodule Skogsra.Core do
   end
 
   @doc false
-  @spec get_default(Env.t()) :: {:ok, term()} | {:error, term()}
+  @spec get_default(Env.t()) :: {:ok, term()} | {:error, binary()}
   def get_default(env)
 
   def get_default(%Env{namespace: nil} = env) do
@@ -134,6 +134,7 @@ defmodule Skogsra.Core do
     get_env(%Env{env | namespace: nil})
   end
 
+  @spec format_missing_var_error(Env.t()) :: binary()
   defp format_missing_var_error(env) do
     keys = Enum.join(env.keys, ", ")
 

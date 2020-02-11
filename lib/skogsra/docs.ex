@@ -7,7 +7,7 @@ defmodule Skogsra.Docs do
   @typedoc """
   Custom docs.
   """
-  @type docs :: nil | binary()
+  @type docs :: nil | false | binary()
 
   @typedoc """
   Function name.
@@ -28,7 +28,17 @@ defmodule Skogsra.Docs do
         ) :: binary()
   def gen_full_docs(module, function_name, app_name, keys, options, docs)
 
+  def gen_full_docs(_, _, _, _, _, false), do: false
+
   def gen_full_docs(module, function_name, app_name, keys, options, docs) do
+    if Application.get_env(:skogsra, :generate_docs, true) do
+      do_gen_full_docs(module, function_name, app_name, keys, options, docs)
+    else
+      "#{insert_custom_docs(docs)}"
+    end
+  end
+
+  defp do_gen_full_docs(module, function_name, app_name, keys, options, docs) do
     module = Macro.to_string(module)
     no_namespace = Env.new(nil, app_name, keys, options)
     namespace = My.Custom.Namespace
@@ -37,42 +47,37 @@ defmodule Skogsra.Docs do
     """
     #{insert_custom_docs(docs)}
 
-    A call to `#{module}.#{function_name}()`:
+    Calling `#{module}.#{function_name}()` will try to retrive a casted value
+    in the following order:
 
-    1. When the OS environment variable is not `nil`, then it'll return its
-       casted value.
-    2. When the OS environment variable is `nil`, then it'll try to get the
-       value from the configuration file.
-    3. When the configuration file does not contain the variable, then it'll
-       return the default value if it's defined.
-    4. When the default value is not defined and it's not required, it'll
-    return `nil`, otherwise it'll return an error.
+    1. From the OS environment variable
+       `#{inspect(Env.os_env(no_namespace))}` (unless `skip_system: true`).
+    2. From the application config (unless `skip_config: true`) e.g:
+       ```
+       #{gen_config_code(no_namespace)}
+       ```
+    3. From the default value if defined. If the variables has the option
+       `required: true` and no default is defined, then the function will
+       return an error.
 
-    A call to `#{module}.#{function_name}(namespace)` will try
-    to do the same as before, but with a namespace (`atom()`). This is
-    useful for spliting different configurations values for the same variable
-    e.g. different environments.
+    Calling `#{module}.#{function_name}(#{inspect(namespace)})` will try to
+    retrieve a casted value in the following order:
 
-    The OS environment variables expected are:
-
-    - When no namespace is specified, then it'll be
-    `$#{Env.os_env(no_namespace)}`.
-    - When a namespace is specified e.g. `#{Macro.to_string(namespace)}`, then
-    it'll be `$#{Env.os_env(with_namespace)}`.
-
-    The expected application configuration would be as follows:
-
-    - Without namespace:
-
-      ```
-      #{gen_config_code(no_namespace)}
-      ```
-
-    - With namespace e.g. `#{Macro.to_string(namespace)}`:
-
-      ```
-      #{gen_config_code(with_namespace)}
-      ```
+    1. From the OS environment variable
+       `#{inspect(Env.os_env(with_namespace))}` (unless `skip_system: true`).
+    2. From the application config (unless `skip_config: true`) e.g:
+       ```
+       #{gen_config_code(with_namespace)}
+       ```
+    3. From the OS environment variable
+       `#{inspect(Env.os_env(no_namespace))}` (unless `skip_system: true`).
+    4. From the application config (unless `skip_config: true`) e.g:
+       ```
+       #{gen_config_code(no_namespace)}
+       ```
+    5. From the default value if defined. If the variables has the option
+       `required: true` and no default is defined, then the function will
+       return an error.
     """
   end
 
@@ -87,13 +92,16 @@ defmodule Skogsra.Docs do
         ) :: binary()
   def gen_short_docs(module, function_name, docs)
 
+  def gen_short_docs(_, _, false), do: false
+
   def gen_short_docs(module, function_name, docs) do
     module = Macro.to_string(module)
 
     """
     #{insert_custom_docs(docs)}
 
-    Bang version of `#{module}.#{function_name}/0` (fails on error).
+    Bang version of `#{module}.#{function_name}/0` (fails on error). Optionally,
+    receives the `namespace` for the variable.
     """
   end
 
@@ -102,11 +110,14 @@ defmodule Skogsra.Docs do
   """
   @spec gen_reload_docs(
           module(),
-          function_name()
+          function_name(),
+          docs()
         ) :: binary()
-  def gen_reload_docs(module, function_name)
+  def gen_reload_docs(module, function_name, docs)
 
-  def gen_reload_docs(module, function_name) do
+  def gen_reload_docs(_, _, false), do: false
+
+  def gen_reload_docs(module, function_name, _) do
     module = Macro.to_string(module)
 
     """
@@ -120,11 +131,14 @@ defmodule Skogsra.Docs do
   """
   @spec gen_put_docs(
           module(),
-          function_name()
+          function_name(),
+          docs()
         ) :: binary()
-  def gen_put_docs(module, function_name)
+  def gen_put_docs(module, function_name, docs)
 
-  def gen_put_docs(module, function_name) do
+  def gen_put_docs(_, _, false), do: false
+
+  def gen_put_docs(module, function_name, _) do
     module = Macro.to_string(module)
 
     """
@@ -170,9 +184,9 @@ defmodule Skogsra.Docs do
     default = Env.default(env)
 
     if is_nil(default) do
-      "#{String.duplicate("  ", indent)}#{key}: #{inspect(type)}()"
+      "#{String.duplicate("\t", indent)}#{key}: #{type}()"
     else
-      "#{String.duplicate("  ", indent)}#{key}: #{inspect(type)}()" <>
+      "#{String.duplicate("\t", indent)}#{key}: #{type}()" <>
         " # Defaults to #{inspect(default)}"
     end
   end
