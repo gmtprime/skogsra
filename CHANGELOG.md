@@ -1,3 +1,11 @@
+# Changelog for 2.1.0
+
+## Enhancements
+
+  * Improved function specs.
+  * Improved generated docs.
+  * Added option to avoid using generated docs.
+
 # Changelog for 2.0.4
 
 ## Enhancements

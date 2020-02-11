@@ -38,6 +38,9 @@ defmodule Skogsra.Type do
     quote do
       @behaviour Skogsra.Type
 
+      @typedoc false
+      @type t :: term()
+
       def cast(value) do
         Skogsra.Type.cast_binary(value)
       end

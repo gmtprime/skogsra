@@ -15,6 +15,7 @@ defmodule Skogsra do
   alias Skogsra.Core
   alias Skogsra.Docs
   alias Skogsra.Env
+  alias Skogsra.Spec
 
   @doc """
   For now is just equivalent to use `import Skogsra`.
@@ -124,9 +125,7 @@ defmodule Skogsra do
              unquote(options),
              Module.get_attribute(__MODULE__, :envdoc)
            )
-      @spec unquote(function_name)() :: {:ok, term()} | {:error, term()}
-      @spec unquote(function_name)(Env.namespace()) ::
-              {:ok, term()} | {:error, term()}
+      unquote(Spec.gen_full_spec(function_name, options))
       def unquote(function_name)(namespace \\ nil)
 
       def unquote(function_name)(namespace) do
@@ -141,8 +140,7 @@ defmodule Skogsra do
              unquote(function_name),
              Module.get_attribute(__MODULE__, :envdoc)
            )
-      @spec unquote(bang!)() :: term() | no_return()
-      @spec unquote(bang!)(Env.namespace()) :: term() | no_return()
+      unquote(Spec.gen_bang_spec(bang!, options))
       def unquote(bang!)(namespace \\ nil)
 
       def unquote(bang!)(namespace) do
@@ -151,10 +149,12 @@ defmodule Skogsra do
       end
 
       # Reloads the variable.
-      @doc Docs.gen_reload_docs(__MODULE__, unquote(function_name))
-      @spec unquote(reload)() :: {:ok, term()} | {:error, term()}
-      @spec unquote(reload)(Env.namespace()) ::
-              {:ok, term()} | {:error, term()}
+      @doc Docs.gen_reload_docs(
+             __MODULE__,
+             unquote(function_name),
+             Module.get_attribute(__MODULE__, :envdoc)
+           )
+      unquote(Spec.gen_reload_spec(reload, options))
       def unquote(reload)(namespace \\ nil)
 
       def unquote(reload)(namespace) do
@@ -163,9 +163,12 @@ defmodule Skogsra do
       end
 
       # Puts a new value to a variable.
-      @doc Docs.gen_put_docs(__MODULE__, unquote(function_name))
-      @spec unquote(put)(term()) :: :ok | {:error, term()}
-      @spec unquote(put)(term(), Env.namespace()) :: :ok | {:error, term()}
+      @doc Docs.gen_put_docs(
+             __MODULE__,
+             unquote(function_name),
+             Module.get_attribute(__MODULE__, :envdoc)
+           )
+      unquote(Spec.gen_put_spec(put, options))
       def unquote(put)(value, namespace \\ nil)
 
       def unquote(put)(value, namespace) do

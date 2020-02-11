@@ -9,6 +9,7 @@ defmodule Skogsra.Settings do
   """
   app_env :system_module, :skogsra, :system_module,
     default: System,
+    type: :module,
     skip_system: true
 
   @envdoc """
@@ -16,5 +17,6 @@ defmodule Skogsra.Settings do
   """
   app_env :application_module, :skogsra, :application_module,
     default: Application,
+    type: :module,
     skip_system: true
 end

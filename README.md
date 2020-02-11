@@ -13,6 +13,7 @@ application configuration:
 * Variable defaults.
 * Automatic type casting of values.
 * Automatic documentation generation for variables.
+* Automatic docs and spec generation.
 * Runtime reloading.
 * Setting variable's values at runtime.
 * Fast cached values access by using `:persistent_term` as temporal storage.
@@ -68,6 +69,8 @@ Additional topics:
 - [Caching variables](#caching-variables).
 - [Handling different environments](#handling-different-environments).
 - [Setting and reloading variables](#setting-and-reloading-variables).
+- [Automatic docs generation](#automatic-docs-generation)
+- [Automatic spec generation](#automatic-spec-generation)
 - [YAML Config Provider](#yaml-config-provider).
 - [Using with Hab](#using-with-hab).
 - [Installation](#installation).
@@ -360,6 +363,46 @@ will have the functions:
 - `MyApp.Config.reload_my_port/` for reloading the value of the variable at
   runtime.
 
+## Automatic docs generation
+
+It's possible to document a configuration variables using the module attribute
+`@envdoc` e.g:
+
+```elixir
+defmodule MyApp.Config do
+  use Skogsra
+
+  @envdoc "My port"
+  app_env :my_port, :myapp, :port,
+    default: 4000
+end
+```
+
+Skogsra then will automatically generate instructions on how to use the
+variable. This extra documentation can be disable with the following:
+
+```elixir
+config :skogsra,
+  generate_docs: false
+```
+
+> **Note**: for "private" configuration variables you can use `@envdoc false`.
+
+## Automatic spec generation
+
+Skogsra will try to generate the appropriate spec for every function generated.
+In our example, given the default value is an integer, the function spec will be
+the following:
+
+```elixir
+@spec my_port() :: {:ok, integer()} | {:error, binary()}
+@spec my_port(Skogsra.Env.namespace()) ::
+        {:ok, integer()} | {:error, binary()}
+```
+
+> **Note**: The same applies for `my_port!/0`, `reload_my_port/0` and
+> `put_my_port/1`.
+
 ## YAML Config Provider
 
 `Skogsra` includes a simple YAML configuration provider compatible with
@@ -432,7 +475,7 @@ in `mix.exs`.
 
   ```elixir
   def deps do
-    [{:skogsra, "~> 2.0"}]
+    [{:skogsra, "~> 2.1"}]
   end
   ```
 
@@ -441,7 +484,7 @@ in `mix.exs`.
   ```elixir
   def deps do
     [
-      {:skogsra, "~> 2.0"},
+      {:skogsra, "~> 2.1"},
       {:yamerl, "~> 0.7"}
     ]
   end
