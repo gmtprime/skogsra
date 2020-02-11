@@ -44,8 +44,8 @@ defmodule Skogsra do
         `:windows`).
       - `namespace`: Namespace for the variables.
       """
-      @spec template(Path.t()) :: binary()
-      @spec template(Path.t(), keyword()) :: binary()
+      @spec template(Path.t()) :: :ok | {:error, File.posix()}
+      @spec template(Path.t(), keyword()) :: :ok | {:error, File.posix()}
       def template(filename, options \\ [])
 
       def template(filename, options) do
