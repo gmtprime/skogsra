@@ -96,7 +96,7 @@ defmodule MyApp.Config do
   use Skogsra
 
   @envdoc "My environment"
-  app_env :my_environmen, :myapp, :environment,
+  app_env :my_environment, :myapp, :environment,
     default: :prod
 end
 ```
@@ -457,7 +457,7 @@ end
 
   will generate the file `env.bat` with the following contents:
 
-  ```bash
+  ```bat
   :: DOCS My port
   :: TYPE integer
   SET MYAPP_PORT="Elixir.Application"
