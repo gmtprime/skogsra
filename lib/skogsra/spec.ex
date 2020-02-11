@@ -57,14 +57,17 @@ defmodule Skogsra.Spec do
   # Helpers
 
   # Get the spec type given a configuration.
-  defp get_spec_type(:binary), do: (quote do: binary())
-  defp get_spec_type(:integer), do: (quote do: integer())
-  defp get_spec_type(:float), do: (quote do: float())
-  defp get_spec_type(:boolean), do: (quote do: boolean())
-  defp get_spec_type(:atom), do: (quote do: atom())
-  defp get_spec_type(:module), do: (quote do: module())
-  defp get_spec_type(:unsafe_module), do: (quote do: module())
-  defp get_spec_type(module) when is_atom(module), do: (quote do: unquote(module).t())
+  defp get_spec_type(:binary), do: quote(do: binary())
+  defp get_spec_type(:integer), do: quote(do: integer())
+  defp get_spec_type(:float), do: quote(do: float())
+  defp get_spec_type(:boolean), do: quote(do: boolean())
+  defp get_spec_type(:atom), do: quote(do: atom())
+  defp get_spec_type(:module), do: quote(do: module())
+  defp get_spec_type(:unsafe_module), do: quote(do: module())
+
+  defp get_spec_type(module) when is_atom(module),
+    do: quote(do: unquote(module).t())
+
   defp get_spec_type(options) when is_list(options) do
     %Env{options: options}
     |> Env.type()

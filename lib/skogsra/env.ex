@@ -131,12 +131,16 @@ defmodule Skogsra.Env do
   """
   @spec os_env(t()) :: binary()
   def os_env(%Env{options: options} = env) do
-    with value when not is_binary(value) <- options[:os_env] do
+    with false <- Env.skip_system?(env),
+         value when not is_binary(value) <- options[:os_env] do
       namespace = gen_namespace(env)
       app_name = gen_app_name(env)
       keys = gen_keys(env)
 
       "#{namespace}#{app_name}_#{keys}"
+    else
+      true -> ""
+      value -> value
     end
   end
 

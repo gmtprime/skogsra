@@ -29,6 +29,7 @@ defmodule Skogsra.Docs do
   def gen_full_docs(module, function_name, app_name, keys, options, docs)
 
   def gen_full_docs(_, _, _, _, _, false), do: false
+
   def gen_full_docs(module, function_name, app_name, keys, options, docs) do
     if Application.get_env(:skogsra, :generate_docs, true) do
       do_gen_full_docs(module, function_name, app_name, keys, options, docs)
@@ -49,8 +50,8 @@ defmodule Skogsra.Docs do
     Calling `#{module}.#{function_name}()` will try to retrive a casted value
     in the following order:
 
-    1. From the OS environment variable `#{Env.os_env(no_namespace)}` (unless
-       `skip_system: true` ).
+    1. From the OS environment variable
+       `#{inspect(Env.os_env(no_namespace))}` (unless `skip_system: true`).
     2. From the application config (unless `skip_config: true`) e.g:
        ```
        #{gen_config_code(no_namespace)}
@@ -62,14 +63,14 @@ defmodule Skogsra.Docs do
     Calling `#{module}.#{function_name}(#{inspect(namespace)})` will try to
     retrieve a casted value in the following order:
 
-    1. From the OS environment variable `#{Env.os_env(with_namespace)}` (unless
-       `skip_system: true`).
+    1. From the OS environment variable
+       `#{inspect(Env.os_env(with_namespace))}` (unless `skip_system: true`).
     2. From the application config (unless `skip_config: true`) e.g:
        ```
        #{gen_config_code(with_namespace)}
        ```
-    3. From the OS environment variable `#{Env.os_env(no_namespace)}` (unless
-       `skip_system: true` ).
+    3. From the OS environment variable
+       `#{inspect(Env.os_env(no_namespace))}` (unless `skip_system: true`).
     4. From the application config (unless `skip_config: true`) e.g:
        ```
        #{gen_config_code(no_namespace)}
@@ -92,6 +93,7 @@ defmodule Skogsra.Docs do
   def gen_short_docs(module, function_name, docs)
 
   def gen_short_docs(_, _, false), do: false
+
   def gen_short_docs(module, function_name, docs) do
     module = Macro.to_string(module)
 
@@ -114,6 +116,7 @@ defmodule Skogsra.Docs do
   def gen_reload_docs(module, function_name, docs)
 
   def gen_reload_docs(_, _, false), do: false
+
   def gen_reload_docs(module, function_name, _) do
     module = Macro.to_string(module)
 
@@ -134,6 +137,7 @@ defmodule Skogsra.Docs do
   def gen_put_docs(module, function_name, docs)
 
   def gen_put_docs(_, _, false), do: false
+
   def gen_put_docs(module, function_name, _) do
     module = Macro.to_string(module)
 

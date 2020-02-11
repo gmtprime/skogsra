@@ -1,5 +1,5 @@
 defmodule Skogsra.CoreTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Skogsra.Cache
   alias Skogsra.Core
