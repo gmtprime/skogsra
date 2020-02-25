@@ -196,7 +196,7 @@ defmodule Skogsra.Env do
   end
 
   @doc false
-  @spec set_binding_order(options()) :: bindings()
+  @spec set_binding_order(options()) :: options()
   def set_binding_order(options) do
     default = [:system, :config]
 
@@ -211,7 +211,7 @@ defmodule Skogsra.Env do
   end
 
   @doc false
-  @spec set_binding_skip(options()) :: bindings()
+  @spec set_binding_skip(options()) :: options()
   def set_binding_skip(options) do
     default = []
 
