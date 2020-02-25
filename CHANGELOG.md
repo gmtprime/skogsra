@@ -5,10 +5,21 @@
 ### Enhancements
 
   * Added JSON config provider.
+  * Added new `Skogsra.Binding` behaviour for adding custom variable bindings.
+  * New option `binding_order` for setting a custom order for variable binding
+    (defaults to `[:system, :config]`). Possible values:
+    + `:system`: For loading OS environment variables.
+    + `:config`: For loading application configuration variables.
+    + `module()`: For loading variables using a custom module implementing
+      `Skogsra.Binding` behaviour.
+  * Added `binding_skip` option to skip one or several variable binding types
+    (defaults to `[]`).
 
-### Breaking Changes
+### Breaking changes
 
   * Improved YAML config provider by making it equivalent to the JSON provider.
+  * The option `skip_config` was changed to `binding_skip: [:config]`.
+  * The option `skip_system` was changed to `binding_skip: [:system]`.
 
 ## Changelog for 2.1.1
 

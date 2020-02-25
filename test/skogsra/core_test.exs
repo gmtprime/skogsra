@@ -5,6 +5,68 @@ defmodule Skogsra.CoreTest do
   alias Skogsra.Core
   alias Skogsra.Env
 
+  describe "get_env/1" do
+    test "when no cache available, can skip cache" do
+      options = [default: 42, cached: false, binding_skip: [:system, :config]]
+      env = Env.new(nil, :core_app, :key, options)
+
+      Cache.put_env(env, 21)
+      assert {:ok, 42} = Core.get_env(env)
+    end
+
+    test "when cache available, cannot skip cache" do
+      options = [default: 42, binding_skip: [:system, :config]]
+      env = Env.new(nil, :core_app, :key, options)
+
+      Cache.put_env(env, 21)
+      assert {:ok, 21} = Core.get_env(env)
+    end
+
+    test "when value is required with just one key, returns error message" do
+      options = [required: true, binding_skip: [:system, :config]]
+      env = Env.new(nil, :core_app, :key, options)
+
+      expected = "Variable key in app core_app is undefined"
+
+      assert {:error, ^expected} = Core.get_env(env)
+    end
+
+    test "when value is required with several keys, returns error message" do
+      options = [required: true, binding_skip: [:system, :config]]
+      env = Env.new(nil, :core_app, [:first, :second], options)
+
+      expected = "Variables first, second in app core_app are undefined"
+
+      assert {:error, ^expected} = Core.get_env(env)
+    end
+  end
+
+  describe "get_env!/1" do
+    test "when exists, returns value" do
+      unique = "VAR#{make_ref() |> :erlang.phash2()}"
+      options = [default: 42, os_env: unique, binding_skip: [:system, :config]]
+      env = Env.new(nil, :core_app, :key, options)
+
+      assert 42 = Core.get_env!(env)
+    end
+
+    test "when doesn't exist, returns nil" do
+      options = [binding_skip: [:system, :config]]
+      env = Env.new(nil, :core_app, :key, options)
+
+      assert is_nil(Core.get_env!(env))
+    end
+
+    test "when doesn't exist and it's required, fails" do
+      options = [required: true, binding_skip: [:system, :config]]
+      env = Env.new(nil, :core_app, :key, options)
+
+      assert_raise RuntimeError, fn ->
+        Core.get_env!(env)
+      end
+    end
+  end
+
   describe "put_env/1" do
     test "when cached is true, stores the variable" do
       env = Env.new(nil, :put_env_app, :key, default: 42)
@@ -33,19 +95,42 @@ defmodule Skogsra.CoreTest do
     end
   end
 
-  describe "fsm_entry/1" do
-    test "caches the variable" do
-      env = Env.new(nil, :fsm_entry_app, :key, default: 42)
+  describe "fsm_entry/1 for system" do
+    setup do
+      name = "VAR#{make_ref() |> :erlang.phash2()}"
+      options = [default: 42, os_env: name, binding_skip: [:config]]
+      env = Env.new(nil, :core_app, :key, options)
 
-      assert {:ok, 42} = Core.fsm_entry(env)
-      assert {:ok, 42} = Cache.get_env(env)
+      {:ok, env: env, options: options}
     end
 
-    test "doesn't cache the variable" do
-      env = Env.new(nil, :fsm_entry_app, :key, default: 42, cached: false)
-
+    test "when there is no OS env, returns default", %{env: env} do
       assert {:ok, 42} = Core.fsm_entry(env)
-      assert :error = Cache.get_env(env)
+    end
+
+    test "when there is OS env, returns it", %{env: env, options: options} do
+      SystemMock.put_env(options[:os_env], "21")
+
+      assert {:ok, 21} = Core.fsm_entry(env)
+    end
+  end
+
+  describe "fsm_entry/1 for config" do
+    setup do
+      options = [default: 42, binding_skip: [:system]]
+      env = Env.new(nil, :core_app, :key, options)
+
+      {:ok, env: env, options: options}
+    end
+
+    test "when there is no app config, returns default", %{env: env} do
+      assert {:ok, 42} = Core.fsm_entry(env)
+    end
+
+    test "when there is app config, returns it", %{env: env} do
+      ApplicationMock.put_env(:core_app, :key, 21)
+
+      assert {:ok, 21} = Core.fsm_entry(env)
     end
   end
 
@@ -63,39 +148,6 @@ defmodule Skogsra.CoreTest do
       assert {:ok, 42} = Core.get_cached(env)
 
       assert {:ok, 42} = Cache.get_env(env)
-    end
-  end
-
-  describe "get_system/1" do
-    test "when there is no OS env, returns next" do
-      options = [default: 42, skip_system: true, skip_config: true]
-      env = Env.new(nil, :core_app, :key, options)
-
-      assert {:ok, 42} = Core.get_system(env)
-    end
-
-    test "when there is OS env, returns it" do
-      env = Env.new(nil, :core_app, :key, default: 42)
-
-      SystemMock.put_env("CORE_APP_KEY", "21")
-
-      assert {:ok, 21} = Core.get_system(env)
-    end
-  end
-
-  describe "get_config/1" do
-    test "when there is no config, returns default" do
-      env = Env.new(nil, :core_app, :key, default: 42, skip_config: true)
-
-      assert {:ok, 42} = Core.get_config(env)
-    end
-
-    test "when there is config, returns it" do
-      env = Env.new(nil, :core_app, :key, type: :integer)
-
-      ApplicationMock.put_env(:core_app, :key, 42)
-
-      assert {:ok, 42} = Core.get_config(env)
     end
   end
 
