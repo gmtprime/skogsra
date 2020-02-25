@@ -129,46 +129,4 @@ defmodule Skogsra.Docs do
   @spec insert_custom_docs(docs()) :: binary()
   def insert_custom_docs(nil), do: "Use `@envdoc` to document this variable"
   def insert_custom_docs(docs), do: docs
-
-  @doc false
-  @spec gen_config_code(Env.t()) :: binary()
-  def gen_config_code(env)
-
-  def gen_config_code(%Env{namespace: nil, app_name: app_name} = env) do
-    "config #{inspect(app_name)},\n#{expand(env)}"
-  end
-
-  def gen_config_code(%Env{namespace: namespace, app_name: app_name} = env) do
-    "config #{inspect(app_name)}, #{inspect(namespace)},\n#{expand(env)}"
-  end
-
-  @doc false
-  @spec expand(Env.t()) :: binary()
-  def expand(env)
-
-  def expand(%Env{keys: keys} = env) do
-    expand(1, keys, env)
-  end
-
-  @doc false
-  @spec expand(pos_integer(), Env.keys(), Env.t()) :: binary()
-  def expand(indent, keys, env)
-
-  def expand(indent, [key], %Env{} = env) do
-    type = Env.type(env)
-    default = Env.default(env)
-
-    if is_nil(default) do
-      "#{String.duplicate("\t", indent)}#{key}: #{type}()"
-    else
-      "#{String.duplicate("\t", indent)}#{key}: #{type}()" <>
-        " # Defaults to #{inspect(default)}"
-    end
-  end
-
-  def expand(indent, [key | keys], %Env{} = env) do
-    "#{String.duplicate("  ", indent)}#{key}: [\n" <>
-      "#{expand(indent + 1, keys, env)}\n" <>
-      "#{String.duplicate("  ", indent)}]"
-  end
 end

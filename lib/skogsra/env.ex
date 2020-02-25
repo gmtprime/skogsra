@@ -191,26 +191,38 @@ defmodule Skogsra.Env do
     options
     |> Keyword.put_new(:required, false)
     |> Keyword.put_new(:cached, true)
-    |> Keyword.put_new(:binding_order, binding_order())
-    |> Keyword.put_new(:binding_skip, binding_skip())
+    |> set_binding_order()
+    |> set_binding_skip()
   end
 
   @doc false
-  @spec binding_order() :: bindings()
-  def binding_order do
+  @spec set_binding_order(options()) :: bindings()
+  def set_binding_order(options) do
     default = [:system, :config]
-    bindings = Application.get_env(:skogsra, :binding_order)
 
-    if is_bindings?(bindings), do: bindings, else: default
+    bindings =
+      options[:binding_order] || Application.get_env(:skogsra, :binding_order)
+
+    if is_bindings?(bindings) do
+      Keyword.put(options, :binding_order, bindings)
+    else
+      Keyword.put(options, :binding_order, default)
+    end
   end
 
   @doc false
-  @spec binding_skip() :: bindings()
-  def binding_skip do
+  @spec set_binding_skip(options()) :: bindings()
+  def set_binding_skip(options) do
     default = []
-    bindings = Application.get_env(:skogsra, :binding_skip)
 
-    if is_bindings?(bindings), do: bindings, else: default
+    bindings =
+      options[:binding_skip] || Application.get_env(:skogsra, :binding_skip)
+
+    if is_bindings?(bindings) do
+      Keyword.put(options, :binding_skip, bindings)
+    else
+      Keyword.put(options, :binding_skip, default)
+    end
   end
 
   @doc false
