@@ -142,12 +142,16 @@ would be:
 defmodule MyList do
   use Skogsra.Type
 
+  @impl Skogsra.Type
+  def cast(value)
+
   def cast(value) when is_binary(value) do
     list =
       value
       |> String.split(~r/,/)
       |> Stream.map(&String.trim/1)
-      |> Enum.map(String.to_integer/1)
+      |> Enum.map(&String.to_integer/1)
+
     {:ok, list}
   end
 
