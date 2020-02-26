@@ -1,7 +1,7 @@
 defmodule Skogsra.Mixfile do
   use Mix.Project
 
-  @version "2.1.0"
+  @version "2.1.1"
   @root "https://github.com/gmtprime/skogsra"
 
   def project do
@@ -9,6 +9,7 @@ defmodule Skogsra.Mixfile do
       app: :skogsra,
       version: @version,
       elixir: "~> 1.8",
+      elixirc_paths: elixirc_paths(Mix.env()),
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       name: "Skogsrå",
@@ -20,6 +21,14 @@ defmodule Skogsra.Mixfile do
 
   #############
   # Application
+
+  defp elixirc_paths(:test) do
+    ["lib", "test/support"]
+  end
+
+  defp elixirc_paths(_) do
+    ["lib"]
+  end
 
   def application do
     [

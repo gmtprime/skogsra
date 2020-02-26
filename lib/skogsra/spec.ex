@@ -65,7 +65,7 @@ defmodule Skogsra.Spec do
   defp get_spec_type(:module), do: quote(do: module())
   defp get_spec_type(:unsafe_module), do: quote(do: module())
 
-  defp get_spec_type(module) when is_atom(module),
+  defp get_spec_type({:__aliases__, _, _} = module),
     do: quote(do: unquote(module).t())
 
   defp get_spec_type(options) when is_list(options) do
