@@ -4,6 +4,10 @@ if Code.ensure_loaded?(Config.Provider) do
 
     alias Skogsra.Provider.Yaml
 
+    @fixtures "#{File.cwd!()}/test/support/fixtures/yaml"
+
+    defp path(path) when is_binary(path), do: "#{@fixtures}/#{path}"
+
     setup do
       Application.ensure_all_started(:logger)
       Application.ensure_all_started(:yamerl)
@@ -21,7 +25,7 @@ if Code.ensure_loaded?(Config.Provider) do
 
     describe "load/2" do
       test "reads a YAML without a namespace" do
-        path = "./test/support/fixtures/without_namespace.yml"
+        path = path("without_namespace.yml")
 
         assert [
                  yggdrasil: [
@@ -41,7 +45,7 @@ if Code.ensure_loaded?(Config.Provider) do
       end
 
       test "reads a YAML with a module" do
-        path = "./test/support/fixtures/with_module.yml"
+        path = path("with_module.yml")
 
         assert [
                  skogsra: [
@@ -57,7 +61,7 @@ if Code.ensure_loaded?(Config.Provider) do
       end
 
       test "reads a YAML with a namespace" do
-        path = "./test/support/fixtures/with_namespace.yml"
+        path = path("with_namespace.yml")
 
         assert [
                  yggdrasil: [
@@ -82,7 +86,7 @@ if Code.ensure_loaded?(Config.Provider) do
       end
 
       test "reads a YAML with several apps" do
-        path = "./test/support/fixtures/several_apps.yml"
+        path = path("several_apps.yml")
 
         assert [
                  yggdrasil: [
@@ -111,22 +115,22 @@ if Code.ensure_loaded?(Config.Provider) do
       end
 
       test "returns same config if the configuration is not found" do
-        path = "./test/support/fixtures/unexistent_file.yml"
+        path = path("unexistent_file.yml")
         assert [] = Yaml.load([], path)
       end
 
       test "returns same config if an app name is not defined" do
-        path = "./test/support/fixtures/no_app_name.yml"
+        path = path("no_app_name.yml")
         assert [] = Yaml.load([], path)
       end
 
       test "returns same config if the YAML config is invalid" do
-        path = "./test/support/fixtures/invalid_config.yml"
+        path = path("invalid_config.yml")
         assert [] = Yaml.load([], path)
       end
 
       test "returns same config if YAML has an invalid namespace" do
-        path = "./test/support/fixtures/invalid_namespace.yml"
+        path = path("invalid_namespace.yml")
         assert [] = Yaml.load([], path)
       end
     end
