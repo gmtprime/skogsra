@@ -1,0 +1,7 @@
+- app: "skogsra"
+  namespace:
+    a: 1
+    b: 2
+  config:
+    x: 0
+    y: 0

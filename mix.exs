@@ -1,7 +1,7 @@
 defmodule Skogsra.Mixfile do
   use Mix.Project
 
-  @version "2.1.1"
+  @version "2.2.0"
   @root "https://github.com/gmtprime/skogsra"
 
   def project do
@@ -13,6 +13,7 @@ defmodule Skogsra.Mixfile do
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       name: "Skogsrå",
+      dialyzer: dialyzer(),
       package: package(),
       deps: deps(),
       docs: docs()
@@ -39,10 +40,15 @@ defmodule Skogsra.Mixfile do
   defp deps do
     [
       {:yamerl, "~> 0.7", optional: true},
+      {:jason, "~> 1.1", optional: true},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:credo, "~> 1.2", only: :dev, runtime: false},
       {:dialyxir, "~> 1.0.0-rc.7", only: :dev, runtime: false}
     ]
+  end
+
+  defp dialyzer do
+    [plt_add_apps: [:yamerl, :jason]]
   end
 
   #########
@@ -103,7 +109,8 @@ defmodule Skogsra.Mixfile do
           Skogsra.Template
         ],
         "Config Providers": [
-          Skogsra.Provider.Yaml
+          Skogsra.Provider.Yaml,
+          Skogsra.Provider.Json
         ]
       ]
     ]

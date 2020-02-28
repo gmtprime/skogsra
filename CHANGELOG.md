@@ -1,10 +1,20 @@
 # Changelog
 
+## Changelog for 2.2.0
+
+### Enhancements
+
+  * Added JSON config provider.
+
+### Breaking Changes
+
+  * Improved YAML config provider by making it equivalent to the JSON provider.
+
 ## Changelog for 2.1.1
 
 ### Bug fixes
 
-  * Fixed bug where `Skogsra.Type` couldn't be used as a type (see [Custom Type Fails at get_spec_type](https://github.com/gmtprime/skogsra/issues/4)
+  * Fixed bug where `Skogsra.Type` couldn't be used as a type (see [Custom Type Fails at get_spec_type](https://github.com/gmtprime/skogsra/issues/4))
 
 ## Changelog for 2.1.0
 

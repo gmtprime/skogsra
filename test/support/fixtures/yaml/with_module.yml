@@ -1,0 +1,6 @@
+- app: "skogsra"
+  module: "Skogsra"
+  config:
+    system_module: "System"
+    application_module: "Application"
+

@@ -1,0 +1,22 @@
+[
+  {
+    "app": "yggdrasil",
+    "namespace": "MyApp.Namespace",
+    "config": {
+      "rabbitmq": {
+        "username": "rabbitmq_username",
+        "password": "rabbitmq_password",
+        "hostname": "localhost",
+        "port": 7652
+      }
+    }
+  },
+  {
+    "app": "skogsra",
+    "namespace": "MyApp.Namespace",
+    "config": {
+      "system_module": "Sys",
+      "application_module": "App"
+    }
+  }
+]

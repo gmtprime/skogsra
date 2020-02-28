@@ -13,7 +13,7 @@ if Code.ensure_loaded?(Config.Provider) and Code.ensure_loaded?(:yamerl) do
     - app: "my_app"
       module: "MyApp.Repo"
       config:
-      - database: "my_app_db"
+        database: "my_app_db"
         username: "postgres"
         password: "postgres"
         hostname: "localhost"
@@ -48,7 +48,8 @@ if Code.ensure_loaded?(Config.Provider) and Code.ensure_loaded?(:yamerl) do
       {:ok, _} = Application.ensure_all_started(:yamerl)
 
       with {:ok, contents} <- File.read(path),
-           {:ok, new_config} <- load_config(contents) do
+           {:ok, parsed} <- parse(contents),
+           {:ok, new_config} <- load_config(parsed) do
         Config.Reader.merge(config, new_config)
       else
         {:error, reason} ->
@@ -64,20 +65,22 @@ if Code.ensure_loaded?(Config.Provider) and Code.ensure_loaded?(:yamerl) do
     #########
     # Helpers
 
-    # Loads a YAML config from a binary.
-    @spec load_config(binary()) :: {:ok, keyword()} | {:error, term()}
-    defp load_config(contents) when is_binary(contents) do
+    @spec parse(binary()) :: {:ok, list()} | {:error, term()}
+    defp parse(contents)
+
+    defp parse(contents) when is_binary(contents) do
       [yml] = :yamerl.decode(contents)
 
-      load_config(yml, [])
+      {:ok, yml}
     rescue
       _ ->
         {:error, "Cannot parse configuration YAML file"}
     end
 
-    # Loads apps configs from a YAML parsed document.
+    # Loads a YAML config from a binary.
+    @spec load_config(list()) :: {:ok, keyword()} | {:error, term()}
     @spec load_config(list(), list()) :: {:ok, keyword()} | {:error, term()}
-    defp load_config(yml, acc)
+    defp load_config(yml, acc \\ [])
 
     defp load_config([], acc) do
       config =
@@ -173,7 +176,7 @@ if Code.ensure_loaded?(Config.Provider) and Code.ensure_loaded?(:yamerl) do
       value =
         nodes
         |> get_key!('config')
-        |> Enum.map(&transform_config/1)
+        |> Enum.map(&expand_variable/1)
         |> List.flatten()
 
       {:ok, value}
@@ -182,36 +185,28 @@ if Code.ensure_loaded?(Config.Provider) and Code.ensure_loaded?(:yamerl) do
         {:error, "Config is invalid"}
     end
 
-    # Transforms parsed YAML to a valid config.
-    @spec transform_config(list()) :: keyword() | no_return()
-    @spec transform_config(list(), keyword()) :: keyword() | no_return()
-    defp transform_config(config, acc \\ [])
-
-    defp transform_config([], acc) do
-      Enum.reverse(acc)
-    end
-
-    defp transform_config([{key, value} | rest], acc) do
+    # Expands a variable
+    @spec expand_variable({key(), term()}) :: {atom(), term()}
+    defp expand_variable({key, value}) do
       key = to_atom(key)
-      value = transform_value(value)
-      new_acc = Keyword.put_new(acc, key, value)
+      value = expand_value(value)
 
-      transform_config(rest, new_acc)
+      {key, value}
     end
 
-    # Transforms a configuration value.
-    @spec transform_value(term()) :: term()
-    defp transform_value([f | _] = value) when is_integer(f) do
+    # Expand a value
+    @spec expand_value(term()) :: term()
+    defp expand_value([char | _] = value) when is_integer(char) do
       "#{value}"
     end
 
-    defp transform_value(values) when is_list(values) do
+    defp expand_value(values) when is_list(values) do
       values
-      |> Enum.map(&transform_config/1)
+      |> Enum.map(&expand_variable/1)
       |> List.flatten()
     end
 
-    defp transform_value(value) do
+    defp expand_value(value) do
       value
     end
 
