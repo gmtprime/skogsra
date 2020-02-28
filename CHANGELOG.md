@@ -11,7 +11,7 @@
 
 ### Bug fixes
 
-  * Fixed bug where `Skogsra.Type` couldn't be used as a type (see [Custom Type Fails at get_spec_type](https://github.com/gmtprime/skogsra/issues/4)
+  * Fixed bug where `Skogsra.Type` couldn't be used as a type (see [Custom Type Fails at get_spec_type](https://github.com/gmtprime/skogsra/issues/4))
 
 ## Changelog for 2.1.0
 
