@@ -11,9 +11,9 @@ defmodule Skogsra.App do
   # Callback
 
   @impl Skogsra.Binding
-  def get_env(env)
+  def get_env(env, config)
 
-  def get_env(%Env{} = env) do
+  def get_env(%Env{} = env, _config) do
     value = do_get_env(env)
 
     {:ok, value}

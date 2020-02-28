@@ -9,9 +9,16 @@ defmodule Skogsra.Binding do
   require Logger
 
   @doc """
+  Callback for initializing binding.
+  """
+  @callback init(env :: Env.t()) ::
+              {:ok, term()} | {:error, term()}
+
+  @doc """
   Callback for getting an environment variable.
   """
-  @callback get_env(env :: Env.t()) :: {:ok, term()} | {:error, term()}
+  @callback get_env(env :: Env.t(), config :: term()) ::
+              {:ok, term()} | {:error, term()}
 
   @doc """
   Uses the `Skogsra.Binding` behaviour.
@@ -19,6 +26,13 @@ defmodule Skogsra.Binding do
   defmacro __using__(_) do
     quote do
       @behaviour Skogsra.Binding
+
+      @impl Skogsra.Binding
+      def init(_env) do
+        {:ok, nil}
+      end
+
+      defoverridable init: 1
     end
   end
 
@@ -27,10 +41,10 @@ defmodule Skogsra.Binding do
   def get_env(:config, %Env{} = env), do: get_env(Skogsra.App, env)
 
   def get_env(module, %Env{} = env) do
-    case module.get_env(env) do
-      {:ok, value} ->
-        cast(module, env, value)
-
+    with {:ok, config} <- module.init(env),
+         {:ok, value} <- module.get_env(env, config) do
+      cast(module, env, value)
+    else
       {:error, reason} ->
         Logger.warn(reason, module: module, env: env, value: nil)
         nil

@@ -4,6 +4,12 @@ defmodule SkogsraTest do
   alias Skogsra.TestConfig
 
   describe "app_env/4" do
+    test "when no options are defined and value exists, gets value" do
+      SystemMock.put_env("MY_APP_NO_OPTIONS", "Foo")
+
+      assert {:ok, "Foo"} = TestConfig.no_options()
+    end
+
     test "when OS env variable exists, gets value" do
       SystemMock.put_env("MY_APP_FROM_SYSTEM", "42")
 
@@ -96,6 +102,10 @@ defmodule SkogsraTest do
       SystemMock.put_env("NAMESPACE_MY_APP_CUSTOM_TYPE", "4,5,    6")
 
       assert {:ok, [4, 5, 6]} = TestConfig.custom_type(Namespace)
+    end
+
+    test "when is loaded from a binding, gets the value" do
+      assert {:ok, 21} = TestConfig.from_json()
     end
   end
 end

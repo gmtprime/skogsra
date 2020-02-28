@@ -10,7 +10,7 @@ defmodule Skogsra.AppTest do
 
       env = Env.new(nil, :app, :key, type: :integer)
 
-      assert {:ok, 42} = App.get_env(env)
+      assert {:ok, 42} = App.get_env(env, nil)
     end
 
     test "when it's defined in a namespace, gets value" do
@@ -18,13 +18,13 @@ defmodule Skogsra.AppTest do
 
       env = Env.new(My.Custom.Namespace, :app, :key, type: :integer)
 
-      assert {:ok, 42} = App.get_env(env)
+      assert {:ok, 42} = App.get_env(env, nil)
     end
 
     test "when it's not defined, does not get the value" do
       env = Env.new(nil, :app, [:a, :b], [])
 
-      assert {:ok, nil} = App.get_env(env)
+      assert {:ok, nil} = App.get_env(env, nil)
     end
   end
 end

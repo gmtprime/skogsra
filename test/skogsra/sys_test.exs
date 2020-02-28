@@ -13,13 +13,13 @@ defmodule Skogsra.SysTest do
     end
 
     test "when variable is not defined, returns nil", %{env: env} do
-      assert {:ok, nil} == Sys.get_env(env)
+      assert {:ok, nil} == Sys.get_env(env, nil)
     end
 
     test "when variable is defined, returns value", %{env: env} do
       SystemMock.put_env(env.options[:os_env], "42")
 
-      assert {:ok, "42"} = Sys.get_env(env)
+      assert {:ok, "42"} = Sys.get_env(env, nil)
     end
   end
 end

@@ -40,7 +40,7 @@ hostname in the following order:
 1. From the OS environment variable `$MYAPP_HOSTNAME` (can be overriden by the
    option `os_env`).
 2. From the configuration file e.g:
-     ```
+     ```elixir
      config :myapp,
        hostname: "my.custom.host"
      ```
@@ -61,6 +61,10 @@ Option          | Type                    | Default              | Description
 `required`      | `boolean`               | `false`              | Whether the variable is required or not.
 `cached`        | `boolean`               | `true`               | Whether the variable should be cached or not.
 
+> **IMPORTANT**: Options `skip_system: true` and `skip_config: true` have been
+> deprecated in favour of `binding_skip: [:system]` and `binding_skip: [:config]`
+> respectively.
+
 Additional topics:
 
 - [Automatic type casting](#automatic-type-casting).
@@ -74,7 +78,7 @@ Additional topics:
 - [Automatic spec generation](#automatic-spec-generation).
 - [Automatic template generation](#automatic-template.generation).
 - [Custom variable bindins](#custom-variable-bindings).
-- [Elixir release YAML and JSON Config Providers](#elixir-release-yaml-and-json-config-providers).
+- [Elixir release YAML and JSON config providers](#elixir-release-yaml-and-json-config-providers).
 - [Using with Hab](#using-with-hab).
 - [Installation](#installation).
 
@@ -271,13 +275,13 @@ in the following order:
 
 1. From the OS environment variable `$TEST_MYAPP_PORT`.
 2. From the configuration file e.g:
-    ```
+    ```elixir
     config :myapp, Test,
       port: 4001
     ```
 3. From the OS environment variable `$MYAPP_PORT`.
 4. From the configuraton file e.g:
-    ```
+    ```elixir
     config :myapp,
       port: 80
     ```
@@ -524,7 +528,7 @@ Or be modified per `app_env` e.g:
    ```
 
 Additionally, we can create new variable bindings by implementing
-`Skogsra.Binding` behaviour e.g. a naïve implementation for loading JSON
+`Skogsra.Binding` behaviour e.g. an implementation for loading JSON
 configuration files would be:
 
 ```elixir
@@ -534,22 +538,58 @@ defmodule MyApp.Json do
   alias Skogsra.Env
 
   @impl true
-  def get_env(%Env{options: options} = env) do
-    name = Env.os_env(env)
+  def init(%Env{} = env) do
+    options = Env.extra_options(env)
 
-    path = "#{:code.root_dir()}/config.json"
-    with {:ok, contents} <- File.read(path),
-         {:ok, config} <- Jason.decode(contents) do
-      {:ok, config[name]}
+    case options[:config_path] do
+      nil ->
+        {:error, "JSON config path not specified"}
+
+      path ->
+        load(path)
+    end
+  end
+
+  @impl true
+  def get_env(%Env{} = env, config) when is_map(config) do
+    name = Env.os_env(env)
+    value = config[name]
+
+    {:ok, value}
+  end
+
+  # Helpers
+
+  # Loads JSON once and caches it in a :persistent_term using the path
+  # as the key.
+  @spec load(binary()) :: {:ok, map()} | {:error, term()}
+  defp load(path) do
+    with nil <- :persistent_term.get(path, nil),
+         {:ok, contents} <- File.read(path),
+         {:ok, config} <- Jason.decode(contents),
+         :ok <- :persistent_term.put(path, config) do
+      {:ok, config}
     else
-      _ ->
-        {:error, "Variable #{name} cannot be loaded from JSON file"}
+      {:error, reason} ->
+        {:error, "Cannot load #{path} due to #{inspect(reason)}"}
+
+      config ->
+        {:ok, config}
     end
   end
 end
 ```
 
-Then our variable declaration could look like the following:
+The previous implementation expects variables to be named the same as the
+OS environment variables e.g:
+
+```json
+{
+  "MYAPP_PORT": 5000
+}
+```
+
+Then our variable declaration would look something like the following:
 
 ```elixir
 defmodule MyApp.Config do
@@ -558,12 +598,20 @@ defmodule MyApp.Config do
   @envdoc "My port"
   app_env :my_port, :myapp, :port,
     binding_order: [:system, :config, MyApp.Json],
+    config_path: "#{Path.cwd!()}/priv/config.json",
     default: 4000
 end
 ```
 
-> **Note**: A better implementation would open and parse the JSON file once and
-> then retrieve the values from the cached version e.g. an `:ets` table.
+If no `:system` or `:config` is found, it will try to load the variable from
+the JSON file e.g:
+
+```elixir
+iex> MyApp.Config.port()
+{:ok, 5000}
+```
+
+> **Note**: The same casting rules apply for all bindings.
 
 ## Elixir release YAML and JSON config providers
 

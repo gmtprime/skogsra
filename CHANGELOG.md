@@ -18,8 +18,11 @@
 ### Breaking changes
 
   * Improved YAML config provider by making it equivalent to the JSON provider.
-  * The option `skip_config` was changed to `binding_skip: [:config]`.
-  * The option `skip_system` was changed to `binding_skip: [:system]`.
+
+### Deprecations
+
+  * The option `skip_config` was deprecated favoring `binding_skip: [:config]`.
+  * The option `skip_system` was deprecated favoring `binding_skip: [:system]`.
 
 ## Changelog for 2.1.1
 

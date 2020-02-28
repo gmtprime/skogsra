@@ -49,8 +49,8 @@ defmodule Skogsra.Env do
 
   @typedoc """
   Environment variable options.
-  - `load_order` - Variable binding load order.
-  - `skip` - Skips loading a variable from the list of bindings.
+  - `binding_order` - Variable binding load order.
+  - `binding_skip` - Skips loading a variable from the list of bindings.
   - `os_env` - The name of the OS environment variable.
   - `type` - Type to cast the OS environment variable value.
   - `namespace` - Default namespace for the variable.
@@ -59,14 +59,15 @@ defmodule Skogsra.Env do
   - `cached` - Whether the variable is cached or not.
   """
   @type option ::
-          {:load_order, bindings()}
-          | {:skip, bindings()}
+          {:binding_order, bindings()}
+          | {:binding_skip, bindings()}
           | {:os_env, binary()}
           | {:type, type()}
           | {:namespace, namespace()}
           | {:default, term()}
           | {:required, boolean()}
           | {:cached, boolean()}
+          | {atom(), term()}
 
   @typedoc """
   Environment variable options:
@@ -180,6 +181,25 @@ defmodule Skogsra.Env do
   @spec binding_order(t()) :: bindings()
   def binding_order(%Env{options: options}) do
     options[:binding_order] -- options[:binding_skip]
+  end
+
+  @doc """
+  Gets extra options.
+  """
+  @spec extra_options(t()) :: keyword()
+  def extra_options(%Env{options: options}) do
+    keys = [
+      :binding_order,
+      :binding_skip,
+      :os_env,
+      :type,
+      :namespace,
+      :default,
+      :required,
+      :cached
+    ]
+
+    Keyword.drop(options, keys)
   end
 
   #########
