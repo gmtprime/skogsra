@@ -1,5 +1,5 @@
 defmodule Skogsra.JsonBinding do
-  @doc false
+  @moduledoc false
   use Skogsra.Binding
 
   alias Skogsra.Env
