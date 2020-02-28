@@ -7,10 +7,10 @@ defmodule Skogsra.EnvTest do
     test "adds default options" do
       %Env{options: options} = Env.new(nil, :app, :key, [])
 
-      assert options[:skip_system] == false
-      assert options[:skip_config] == false
       assert options[:required] == false
       assert options[:cached] == true
+      assert options[:binding_order] == [:system, :config]
+      assert options[:binding_skip] == []
     end
 
     test "converts single key to a list" do
@@ -19,34 +19,6 @@ defmodule Skogsra.EnvTest do
 
     test "sets namespace" do
       assert %Env{namespace: Test} = Env.new(nil, :app, :key, namespace: Test)
-    end
-  end
-
-  describe "skip_system?/1" do
-    test "gets default value for skip system if not set" do
-      env = Env.new(nil, :app, :key, [])
-
-      assert not Env.skip_system?(env)
-    end
-
-    test "gets value for skip system if set" do
-      env = Env.new(nil, :app, :key, skip_system: true)
-
-      assert Env.skip_system?(env)
-    end
-  end
-
-  describe "skip_config?/1" do
-    test "gets default value for skip config if not set" do
-      env = Env.new(nil, :app, :key, [])
-
-      assert not Env.skip_config?(env)
-    end
-
-    test "gets value for skip config if set" do
-      env = Env.new(nil, :app, :key, skip_config: true)
-
-      assert Env.skip_config?(env)
     end
   end
 
@@ -70,7 +42,7 @@ defmodule Skogsra.EnvTest do
     end
 
     test "when skips system, returns empty string" do
-      env = Env.new(nil, :app, [:a, :b], os_env: "FOO", skip_system: true)
+      env = Env.new(nil, :app, [:a, :b], os_env: "FOO", binding_skip: [:system])
 
       assert "" == Env.os_env(env)
     end
@@ -123,6 +95,19 @@ defmodule Skogsra.EnvTest do
       env = Env.new(nil, :app, :key, cached: false)
 
       assert not Env.cached?(env)
+    end
+  end
+
+  describe "binding_order/1" do
+    test "returns not skippable variable bindings" do
+      options = [
+        binding_order: [:system, :config],
+        binding_skip: [:system]
+      ]
+
+      env = Env.new(nil, :app, :key, options)
+
+      assert [:config] = Env.binding_order(env)
     end
   end
 

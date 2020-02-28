@@ -25,6 +25,16 @@ defmodule Skogsra.Env do
   @type keys :: [key()]
 
   @typedoc """
+  Variable binding.
+  """
+  @type binding :: :config | :system | module()
+
+  @typedoc """
+  Variable binding list.
+  """
+  @type bindings :: [binding()]
+
+  @typedoc """
   Types.
   """
   @type type ::
@@ -39,8 +49,8 @@ defmodule Skogsra.Env do
 
   @typedoc """
   Environment variable options.
-  - `skip_system` - Skips loading the variable from the OS.
-  - `skip_config` - Skips loading the variable from the config.
+  - `binding_order` - Variable binding load order.
+  - `binding_skip` - Skips loading a variable from the list of bindings.
   - `os_env` - The name of the OS environment variable.
   - `type` - Type to cast the OS environment variable value.
   - `namespace` - Default namespace for the variable.
@@ -49,14 +59,15 @@ defmodule Skogsra.Env do
   - `cached` - Whether the variable is cached or not.
   """
   @type option ::
-          {:skip_system, boolean()}
-          | {:skip_config, boolean()}
+          {:binding_order, bindings()}
+          | {:binding_skip, bindings()}
           | {:os_env, binary()}
           | {:type, type()}
           | {:namespace, namespace()}
           | {:default, term()}
           | {:required, boolean()}
           | {:cached, boolean()}
+          | {atom(), term()}
 
   @typedoc """
   Environment variable options:
@@ -105,33 +116,11 @@ defmodule Skogsra.Env do
   end
 
   @doc """
-  Whether the `Skogsra` environment variable should skip system or not.
-  """
-  @spec skip_system?(t()) :: boolean()
-  def skip_system?(%Env{options: options}) do
-    case options[:skip_system] do
-      true -> true
-      _ -> false
-    end
-  end
-
-  @doc """
-  Whether the `Skogsra` environment variable should skip config or not.
-  """
-  @spec skip_config?(t()) :: boolean()
-  def skip_config?(%Env{options: options}) do
-    case options[:skip_config] do
-      true -> true
-      _ -> false
-    end
-  end
-
-  @doc """
   Gets the OS variable name for the `Skogsra` environment variable.
   """
   @spec os_env(t()) :: binary()
   def os_env(%Env{options: options} = env) do
-    with false <- Env.skip_system?(env),
+    with true <- :system in Env.binding_order(env),
          value when not is_binary(value) <- options[:os_env] do
       namespace = gen_namespace(env)
       app_name = gen_app_name(env)
@@ -139,7 +128,7 @@ defmodule Skogsra.Env do
 
       "#{namespace}#{app_name}_#{keys}"
     else
-      true -> ""
+      false -> ""
       value -> value
     end
   end
@@ -186,16 +175,84 @@ defmodule Skogsra.Env do
     end
   end
 
+  @doc """
+  Gets the binding order for a `Skogsra` environment variable.
+  """
+  @spec binding_order(t()) :: bindings()
+  def binding_order(%Env{options: options}) do
+    options[:binding_order] -- options[:binding_skip]
+  end
+
+  @doc """
+  Gets extra options.
+  """
+  @spec extra_options(t()) :: keyword()
+  def extra_options(%Env{options: options}) do
+    keys = [
+      :binding_order,
+      :binding_skip,
+      :os_env,
+      :type,
+      :namespace,
+      :default,
+      :required,
+      :cached
+    ]
+
+    Keyword.drop(options, keys)
+  end
+
   #########
   # Helpers
 
   @doc false
+  @spec defaults(options()) :: options()
   def defaults(options) do
     options
-    |> Keyword.put_new(:skip_system, false)
-    |> Keyword.put_new(:skip_config, false)
     |> Keyword.put_new(:required, false)
     |> Keyword.put_new(:cached, true)
+    |> set_binding_order()
+    |> set_binding_skip()
+  end
+
+  @doc false
+  @spec set_binding_order(options()) :: options()
+  def set_binding_order(options) do
+    default = [:system, :config]
+
+    bindings =
+      options[:binding_order] || Application.get_env(:skogsra, :binding_order)
+
+    if is_bindings?(bindings) do
+      Keyword.put(options, :binding_order, bindings)
+    else
+      Keyword.put(options, :binding_order, default)
+    end
+  end
+
+  @doc false
+  @spec set_binding_skip(options()) :: options()
+  def set_binding_skip(options) do
+    default = []
+
+    bindings =
+      options[:binding_skip] || Application.get_env(:skogsra, :binding_skip)
+
+    if is_bindings?(bindings) do
+      Keyword.put(options, :binding_skip, bindings)
+    else
+      Keyword.put(options, :binding_skip, default)
+    end
+  end
+
+  @doc false
+  @spec is_bindings?(term()) :: boolean()
+  def is_bindings?(other) when not is_list(other), do: false
+
+  def is_bindings?(bindings) do
+    Enum.all?(bindings, fn binding ->
+      binding in [:system, :config] or Code.ensure_loaded?(binding)
+    end)
   end
 
   @doc false

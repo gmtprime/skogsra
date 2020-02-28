@@ -2,10 +2,9 @@ defmodule Skogsra.Core do
   @moduledoc """
   This module defines the core API for Skogsra.
   """
-  alias Skogsra.App
+  alias Skogsra.Binding
   alias Skogsra.Cache
   alias Skogsra.Env
-  alias Skogsra.Sys
 
   ############
   # Public API
@@ -16,7 +15,13 @@ defmodule Skogsra.Core do
   @spec get_env(Env.t()) :: {:ok, term()} | {:error, binary()}
   def get_env(env)
 
-  def get_env(%Env{} = env), do: fsm_entry(env)
+  def get_env(%Env{} = env) do
+    if Env.cached?(env) do
+      get_cached(env)
+    else
+      fsm_entry(env)
+    end
+  end
 
   @doc """
   Gets the value of a given `env`. Fails on error.
@@ -55,7 +60,7 @@ defmodule Skogsra.Core do
   def reload_env(env)
 
   def reload_env(%Env{} = env) do
-    case get_system(env) do
+    case fsm_entry(env) do
       {:ok, value} ->
         if Env.cached?(env), do: Cache.put_env(env, value)
         {:ok, value}
@@ -73,7 +78,18 @@ defmodule Skogsra.Core do
   def fsm_entry(env)
 
   def fsm_entry(%Env{} = env) do
-    if Env.cached?(env), do: get_cached(env), else: get_system(env)
+    order = Env.binding_order(env)
+    default = get_default(env)
+
+    Enum.reduce_while(order, default, fn binding, default ->
+      case Binding.get_env(binding, env) do
+        nil ->
+          {:cont, default}
+
+        value ->
+          {:halt, {:ok, value}}
+      end
+    end)
   end
 
   @doc false
@@ -82,37 +98,9 @@ defmodule Skogsra.Core do
 
   def get_cached(%Env{} = env) do
     with :error <- Cache.get_env(env),
-         {:ok, value} <- get_system(env),
+         {:ok, value} <- fsm_entry(env),
          :ok <- Cache.put_env(env, value) do
       {:ok, value}
-    end
-  end
-
-  @doc false
-  @spec get_system(Env.t()) :: {:ok, term()} | {:error, binary()}
-  def get_system(env)
-
-  def get_system(%Env{} = env) do
-    case Sys.get_env(env) do
-      nil ->
-        get_config(env)
-
-      value ->
-        {:ok, value}
-    end
-  end
-
-  @doc false
-  @spec get_config(Env.t()) :: {:ok, term()} | {:error, binary()}
-  def get_config(env)
-
-  def get_config(%Env{} = env) do
-    case App.get_env(env) do
-      nil ->
-        get_default(env)
-
-      value ->
-        {:ok, value}
     end
   end
 

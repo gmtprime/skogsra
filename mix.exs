@@ -96,10 +96,13 @@ defmodule Skogsra.Mixfile do
           Skogsra.Core
         ],
         Generalizations: [
-          Skogsra.App,
-          Skogsra.Sys,
           Skogsra.Cache,
           Skogsra.Type
+        ],
+        "Variable Bindings": [
+          Skogsra.Binding,
+          Skogsra.App,
+          Skogsra.Sys
         ],
         "Documentation Generation": [
           Skogsra.Docs,
