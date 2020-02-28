@@ -1,5 +1,12 @@
 # Changelog
 
+## Changelog for 2.2.0
+
+### Enhancements
+
+  * Added JSON config provider.
+  * Improved YAML config provider by making it equivalent to the JSON provider.
+
 ## Changelog for 2.1.1
 
 ### Bug fixes

@@ -564,7 +564,7 @@ in `mix.exs`.
 
   ```elixir
   def deps do
-    [{:skogsra, "~> 2.1"}]
+    [{:skogsra, "~> 2.2"}]
   end
   ```
 
@@ -573,7 +573,7 @@ in `mix.exs`.
   ```elixir
   def deps do
     [
-      {:skogsra, "~> 2.1"},
+      {:skogsra, "~> 2.2"},
       {:yamerl, "~> 0.7"}
     ]
   end
@@ -584,7 +584,7 @@ in `mix.exs`.
   ```elixir
   def deps do
     [
-      {:skogsra, "~> 2.1"},
+      {:skogsra, "~> 2.2"},
       {:jason, "~> 1.1"}
     ]
   end
