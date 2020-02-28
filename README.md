@@ -17,7 +17,7 @@ application configuration:
 * Runtime reloading.
 * Setting variable's values at runtime.
 * Fast cached values access by using `:persistent_term` as temporal storage.
-* YAML configuration provider for Elixir releases.
+* YAML and JSON configuration providers for Elixir releases.
 
 ## Small example
 
@@ -72,7 +72,7 @@ Additional topics:
 - [Automatic docs generation](#automatic-docs-generation).
 - [Automatic spec generation](#automatic-spec-generation).
 - [Automatic template generation](#automatic-template.generation).
-- [YAML Config Provider](#yaml-config-provider).
+- [YAML and JSON Config Providers](#yaml-and-json-config-providers).
 - [Using with Hab](#using-with-hab).
 - [Installation](#installation).
 
@@ -467,26 +467,43 @@ end
   SET MYAPP_PORT="Elixir.Application"
   ```
 
-## YAML Config Provider
+## YAML and JSON Config Providers
 
-`Skogsra` includes a simple YAML configuration provider compatible with
-`mix release` for Elixir ≥ 1.9.
+`Skogsra` includes two simple configuration providers compatible with
+`mix release` for Elixir ≥ 1.9:
 
-The following is the supported configuration format:
+- YAML configuration provider:
 
-```yaml
-# file: /etc/my_app/config.yml
-- app: "my_app"              # Name of the application.
-  module: "MyApp.Repo"       # Optional module/namespace.
-  config:                    # Actual configuration.
-    - database: "my_app_db"
-      username: "postgres"
-      password: "postgres"
-      hostname: "localhost"
-      port: 5432
-```
+   ```yaml
+   - app: "my_app"              # Name of the application.
+     module: "MyApp.Repo"       # Optional module/namespace.
+     config:                    # Actual configuration.
+       database: "my_app_db"
+       username: "postgres"
+       password: "postgres"
+       hostname: "localhost"
+       port: 5432
+   ```
 
-The previous configuration file would translate to:
+- JSON configuration provider:
+
+   ```json
+   [
+     {
+       "app": "my_app",
+       "module": "MyApp.Repo",
+       "config": {
+         "database": "my_app_db",
+         "username": "postgres",
+         "password": "postgres",
+         "hostname": "localhost",
+         "port": 5432
+       }
+     }
+   ]
+   ```
+
+Both configurations would be equivalent to:
 
 ```elixir
 config :my_app, MyApp.Repo,
@@ -497,12 +514,20 @@ config :my_app, MyApp.Repo,
   port: 5432
 ```
 
-For using this config provider, just add the following to your release
+For using these config providers, just add the following to your release
 configuration:
 
-```elixir
-config_providers: [{Skogsra.Provider.Yaml, ["/path/to/config/file.yml"]}]
-```
+- For YAML configurations:
+
+   ```elixir
+   config_providers: [{Skogsra.Provider.Yaml, ["/path/to/config/file.yml"]}]
+   ```
+
+- For JSON configurations:
+
+   ```elixir
+   config_providers: [{Skogsra.Provider.Json, ["/path/to/config/file.json"]}]
+   ```
 
 > **Note**: If the `module` you're using in you're config does not exist, then
 > change it to `namespace` e.g: `namespace: "MyApp.Repo"`. Otherwise, it will
@@ -550,6 +575,17 @@ in `mix.exs`.
     [
       {:skogsra, "~> 2.1"},
       {:yamerl, "~> 0.7"}
+    ]
+  end
+  ```
+
+- For Elixir ≥ 1.9, Erlang ≥ 22 and JSON config provider support:
+
+  ```elixir
+  def deps do
+    [
+      {:skogsra, "~> 2.1"},
+      {:jason, "~> 1.1"}
     ]
   end
   ```

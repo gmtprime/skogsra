@@ -39,6 +39,7 @@ defmodule Skogsra.Mixfile do
   defp deps do
     [
       {:yamerl, "~> 0.7", optional: true},
+      {:jason, "~> 1.1", optional: true},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:credo, "~> 1.2", only: :dev, runtime: false},
       {:dialyxir, "~> 1.0.0-rc.7", only: :dev, runtime: false}
