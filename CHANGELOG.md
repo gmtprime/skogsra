@@ -5,6 +5,9 @@
 ### Enhancements
 
   * Added JSON config provider.
+
+### Breaking Changes
+
   * Improved YAML config provider by making it equivalent to the JSON provider.
 
 ## Changelog for 2.1.1
