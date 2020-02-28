@@ -13,6 +13,7 @@ defmodule Skogsra.Mixfile do
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       name: "Skogsrå",
+      dialyzer: dialyzer(),
       package: package(),
       deps: deps(),
       docs: docs()
@@ -44,6 +45,10 @@ defmodule Skogsra.Mixfile do
       {:credo, "~> 1.2", only: :dev, runtime: false},
       {:dialyxir, "~> 1.0.0-rc.7", only: :dev, runtime: false}
     ]
+  end
+
+  defp dialyzer do
+    [plt_add_apps: [:yamerl, :jason]]
   end
 
   #########
@@ -104,7 +109,8 @@ defmodule Skogsra.Mixfile do
           Skogsra.Template
         ],
         "Config Providers": [
-          Skogsra.Provider.Yaml
+          Skogsra.Provider.Yaml,
+          Skogsra.Provider.Json
         ]
       ]
     ]

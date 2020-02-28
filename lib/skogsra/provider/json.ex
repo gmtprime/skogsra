@@ -70,7 +70,7 @@ if Code.ensure_loaded?(Config.Provider) and Code.ensure_loaded?(Jason) do
 
     # Loads a JSON config from a list of maps.
     @spec load_config([map()]) :: {:ok, keyword()} | {:error, term()}
-    @spec load_config([map()], keyword()) :: {:ok, keyword()} | {:error, term()}
+    @spec load_config([map()], list()) :: {:ok, keyword()} | {:error, term()}
     defp load_config(maps, acc \\ [])
 
     defp load_config([], acc) do

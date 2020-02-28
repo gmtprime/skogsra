@@ -79,7 +79,7 @@ if Code.ensure_loaded?(Config.Provider) and Code.ensure_loaded?(:yamerl) do
 
     # Loads a YAML config from a binary.
     @spec load_config(list()) :: {:ok, keyword()} | {:error, term()}
-    @spec load_config(list(), keyword()) :: {:ok, keyword()} | {:error, term()}
+    @spec load_config(list(), list()) :: {:ok, keyword()} | {:error, term()}
     defp load_config(yml, acc \\ [])
 
     defp load_config([], acc) do
