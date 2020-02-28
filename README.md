@@ -615,7 +615,7 @@ iex> MyApp.Config.port()
 
 ## Elixir release YAML and JSON config providers
 
-`Skogsra` includes two simple configuration providers compatible with
+Skogsrå includes two simple configuration providers compatible with
 `mix release` for Elixir ≥ 1.9:
 
 - YAML configuration provider:
