@@ -1,5 +1,12 @@
 # Changelog
 
+## Changelog for 2.2.1
+
+### Bugfix
+
+  * When no type is defined and it cannot be derived from the default value,
+    then it should return `any()` instead of `binary()`.
+
 ## Changelog for 2.2.0
 
 ### Enhancements
