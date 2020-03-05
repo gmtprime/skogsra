@@ -77,6 +77,7 @@ defmodule Skogsra.Type do
   def do_cast(:atom, value), do: cast_atom(value)
   def do_cast(:module, value), do: cast_module(value)
   def do_cast(:unsafe_module, value), do: cast_unsafe_module(value)
+  def do_cast(:any, value), do: value
   def do_cast(module, value), do: module.cast(value)
 
   @doc false

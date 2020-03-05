@@ -163,7 +163,7 @@ defmodule Skogsra.EnvTest do
     end
 
     test "when other" do
-      assert :binary == Env.get_type([])
+      assert :any == Env.get_type([])
     end
   end
 end

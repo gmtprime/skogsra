@@ -93,6 +93,7 @@ the default value should be of the following types:
 - `:float`.
 - `:boolean`
 - `:atom`
+- `:any`
 
 e.g. in the following example, the value will be casted to `:atom`
 automatically:
@@ -137,6 +138,7 @@ A type can be explicitly set. The available types are:
  - `:float`.
  - `:boolean`.
  - `:atom`.
+ - `:any`.
  - `:module` (modules loaded in the system).
  - `:unsafe_module` (modules that might or might not be loaded in the system)
  - A module name with an implementation for the behaviour `Skogsra.Type`.

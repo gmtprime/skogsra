@@ -45,6 +45,7 @@ defmodule Skogsra.Env do
           | :atom
           | :module
           | :unsafe_module
+          | :any
           | module()
 
   @typedoc """
@@ -304,5 +305,5 @@ defmodule Skogsra.Env do
   def get_type(value) when is_float(value), do: :float
   def get_type(value) when is_boolean(value), do: :boolean
   def get_type(value) when is_atom(value), do: :atom
-  def get_type(_), do: :binary
+  def get_type(_), do: :any
 end
