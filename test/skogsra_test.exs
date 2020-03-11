@@ -108,4 +108,82 @@ defmodule SkogsraTest do
       assert {:ok, 21} = TestConfig.from_json()
     end
   end
+
+  describe "validate" do
+    defmodule EmptyConfig do
+      use Skogsra
+    end
+
+    defmodule NoRequiredConfig do
+      use Skogsra
+
+      app_env :not_required, :validation_app, :not_required,
+        binding_skip: [:system],
+        required: false
+
+      app_env :not_required_either, :validation_app, :not_required_either
+    end
+
+    defmodule RequiredConfig do
+      use Skogsra
+
+      app_env :required, :validation_app, :required, required: true
+    end
+
+    defmodule MissingRequiredConfig do
+      use Skogsra
+
+      app_env :missing_required, :validation_app, :missing_required,
+        required: true
+    end
+
+    defmodule TypedRequiredConfig do
+      use Skogsra
+
+      app_env :int_required, :validation_app, :int_required,
+        type: :integer,
+        required: true
+    end
+
+    test "with empty config, succeeds" do
+      assert :ok = EmptyConfig.validate()
+      assert :ok = EmptyConfig.validate!()
+    end
+
+    test "with config with no required values, succeeds" do
+      assert :ok = NoRequiredConfig.validate()
+      assert :ok = NoRequiredConfig.validate!()
+    end
+
+    test "when required values are found, succeeds" do
+      SystemMock.put_env("VALIDATION_APP_REQUIRED", "42")
+
+      assert :ok = RequiredConfig.validate()
+      assert :ok = RequiredConfig.validate!()
+    end
+
+    test "when required value not found, fails" do
+      assert_raise RuntimeError, fn -> MissingRequiredConfig.validate!() end
+    end
+
+    test "when required value not found for a namespace, fails" do
+      assert_raise RuntimeError, fn ->
+        MissingRequiredConfig.validate!(Namespace)
+      end
+    end
+
+    test "when required value not found, errors" do
+      assert {:error, _} = MissingRequiredConfig.validate()
+    end
+
+    test "when required value not found for a namespace, errors" do
+      assert {:error, _} = MissingRequiredConfig.validate(Namespace)
+    end
+
+    test "when required value has incorrect type, fails" do
+      SystemMock.put_env("VALIDATION_APP_INT_REQUIRED", "foo")
+
+      assert_raise RuntimeError, fn -> TypedRequiredConfig.validate!() end
+    end
+  end
 end
