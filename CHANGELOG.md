@@ -1,5 +1,14 @@
 # Changelog
 
+## Changelog for 2.2.2
+
+### Enhancements
+
+  * Added `validate!/0` and `validate!/1` functions for checking whether the
+    required variables have values or not (thanks to
+    [Riccardo Binetti](https://github.com/rbino)).
+  * Travis-CI build now checking `format`, `credo`, `dialyzer` and `coveralls`.
+
 ## Changelog for 2.2.1
 
 ### Bugfix

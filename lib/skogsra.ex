@@ -34,6 +34,7 @@ defmodule Skogsra do
   end
 
   @doc false
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   defmacro __before_compile__(_env) do
     quote do
       @doc """
@@ -90,6 +91,7 @@ defmodule Skogsra do
         end
       end
 
+      @spec __get_definitions__(keyword()) :: [Template.t()]
       defp __get_definitions__(options) do
         namespace = options[:namespace]
         type = options[:type] || :elixir
@@ -104,6 +106,7 @@ defmodule Skogsra do
         |> Enum.map(&Template.new(&1))
       end
 
+      @spec __get_required_errors__(Env.namespace()) :: [binary()]
       defp __get_required_errors__(namespace) do
         @definitions
         |> Stream.map(fn {_docs, name} ->

@@ -4,9 +4,17 @@ elixir:
   - 1.8.2
 otp_release:
   - 22.2.6
+env:
+  - MIX_ENV=test
+cache:
+  directories:
+    - priv/plts
 before_script:
-  - MIX_ENV=test mix deps.get
-  - MIX_ENV=test mix deps.compile
-  - MIX_ENV=test mix compile
+  - mix deps.get
+  - mix deps.compile
+  - mix compile --warnings-as-errors
 script:
-  - MIX_ENV=test mix test
+  - mix format --dry-run --check-formatted
+  - mix credo --strict
+  - mix dialyzer
+  - mix coveralls.travis

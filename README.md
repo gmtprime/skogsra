@@ -1,6 +1,6 @@
 # Skogsrå
 
-[![Build Status](https://travis-ci.org/gmtprime/skogsra.svg?branch=master)](https://travis-ci.org/gmtprime/skogsra) [![Hex pm](http://img.shields.io/hexpm/v/skogsra.svg?style=flat)](https://hex.pm/packages/skogsra) [![hex.pm downloads](https://img.shields.io/hexpm/dt/skogsra.svg?style=flat)](https://hex.pm/packages/skogsra)
+[![Build Status](https://travis-ci.org/gmtprime/skogsra.svg?branch=master)](https://travis-ci.org/gmtprime/skogsra) [![Hex pm](http://img.shields.io/hexpm/v/skogsra.svg?style=flat)](https://hex.pm/packages/skogsra) [![hex.pm downloads](https://img.shields.io/hexpm/dt/skogsra.svg?style=flat)](https://hex.pm/packages/skogsra) [![Coverage Status](https://coveralls.io/repos/github/gmtprime/skogsra/badge.svg?branch=master)](https://coveralls.io/github/gmtprime/skogsra?branch=master)
 
 > The _Skogsrå_ was a mythical creature of the forest that appears in the form
 > of a small, beautiful woman with a seemingly friendly temperament. However,
@@ -253,7 +253,7 @@ iex(1)> System.get_env("MYAPP_PORT")
 nil
 iex(2)> Application.get_env(:myapp, :port)
 nil
-iex(2)> MyApp.Config.my_port()
+iex(3)> MyApp.Config.my_port()
 {:error, "Variable port in app myapp is undefined"}
 ```
 
@@ -266,7 +266,7 @@ iex(1)> System.get_env("MYAPP_PORT")
 nil
 iex(2)> Application.get_env(:myapp, :port)
 nil
-iex(2)> MyApp.Config.validate!()
+iex(3)> MyApp.Config.validate!()
 ** (RuntimeError) Variable port in app myapp is undefined
 ```
 
