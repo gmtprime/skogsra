@@ -14,8 +14,7 @@ before_script:
   - mix deps.compile
   - mix compile --warnings-as-errors
 script:
-  - mix test
-  - mix format --dry-run --check.formatted
+  - mix format --dry-run --check-formatted
   - mix credo --strict
   - mix dialyzer
   - mix coveralls.travis
