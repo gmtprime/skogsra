@@ -54,6 +54,42 @@ defmodule Skogsra do
         |> Template.generate(filename)
       end
 
+      @doc """
+      Validates that all required variables are present.
+      Returns `:ok` if they are, `{:error, errors}` if they are not. `errors`
+      will be a list of all errors encountered while getting required variables.
+
+      It is possible to provide a `namespace` as argument (defaults to `nil`).
+      """
+      @spec validate() :: :ok | {:error, [binary()]}
+      @spec validate(Env.namespace()) :: :ok | {:error, [binary()]}
+      def validate(namespace \\ nil)
+
+      def validate(namespace) do
+        errors = __get_required_errors__(namespace)
+
+        if errors == [] do
+          :ok
+        else
+          {:error, errors}
+        end
+      end
+
+      @doc """
+      Validates that all required variables are present.
+      Returns `:ok` if they are, raises if they're not.
+
+      It is possible to provide a `namespace` as argument (defaults to `nil`).
+      """
+      @spec validate!() :: :ok | no_return()
+      @spec validate!(Env.namespace()) :: :ok | no_return()
+      def validate!(namespace \\ nil) do
+        with {:error, errors} <- validate(namespace) do
+          error_string = Enum.join(errors, ", ")
+          raise error_string
+        end
+      end
+
       defp __get_definitions__(options) do
         namespace = options[:namespace]
         type = options[:type] || :elixir
@@ -66,6 +102,23 @@ defmodule Skogsra do
         |> Stream.filter(fn {_docs, env} -> Env.os_env(env) != "" end)
         |> Stream.map(fn {docs, env} -> %{docs: docs, env: env, type: type} end)
         |> Enum.map(&Template.new(&1))
+      end
+
+      defp __get_required_errors__(namespace) do
+        @definitions
+        |> Stream.map(fn {_docs, name} ->
+          apply(__MODULE__, name, [namespace])
+        end)
+        |> Stream.filter(&Env.required?/1)
+        |> Enum.reduce([], fn env, errors ->
+          case Core.get_env(env) do
+            {:ok, _value} ->
+              errors
+
+            {:error, error} ->
+              [error | errors]
+          end
+        end)
       end
     end
   end
