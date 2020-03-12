@@ -253,7 +253,7 @@ iex(1)> System.get_env("MYAPP_PORT")
 nil
 iex(2)> Application.get_env(:myapp, :port)
 nil
-iex(2)> MyApp.Config.my_port()
+iex(3)> MyApp.Config.my_port()
 {:error, "Variable port in app myapp is undefined"}
 ```
 
@@ -266,7 +266,7 @@ iex(1)> System.get_env("MYAPP_PORT")
 nil
 iex(2)> Application.get_env(:myapp, :port)
 nil
-iex(2)> MyApp.Config.validate!()
+iex(3)> MyApp.Config.validate!()
 ** (RuntimeError) Variable port in app myapp is undefined
 ```
 
