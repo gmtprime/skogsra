@@ -21,3 +21,7 @@ erl_crash.dump
 
 # Tool versions file
 .tool-versions
+
+# PLTs
+priv/plts/skogsra.plt
+priv/plts/skogsra.plt.hash
