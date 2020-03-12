@@ -1,7 +1,7 @@
 defmodule Skogsra.Mixfile do
   use Mix.Project
 
-  @version "2.2.1"
+  @version "2.2.2"
   @root "https://github.com/gmtprime/skogsra"
 
   def project do
@@ -14,6 +14,8 @@ defmodule Skogsra.Mixfile do
       start_permanent: Mix.env() == :prod,
       name: "Skogsrå",
       dialyzer: dialyzer(),
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [coveralls: :test, "coveralls.travis": :test],
       package: package(),
       deps: deps(),
       docs: docs()
@@ -42,13 +44,17 @@ defmodule Skogsra.Mixfile do
       {:yamerl, "~> 0.7", optional: true},
       {:jason, "~> 1.1", optional: true},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
-      {:credo, "~> 1.2", only: :dev, runtime: false},
-      {:dialyxir, "~> 1.0.0-rc.7", only: :dev, runtime: false}
+      {:credo, "~> 1.2", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.0.0-rc.7", only: [:dev, :test], runtime: false},
+      {:excoveralls, "~> 0.12", only: :test, runtime: false}
     ]
   end
 
   defp dialyzer do
-    [plt_add_apps: [:yamerl, :jason]]
+    [
+      plt_file: {:no_warn, "priv/plts/skogsra.plt"},
+      plt_add_apps: [:yamerl, :jason]
+    ]
   end
 
   #########
@@ -64,7 +70,7 @@ defmodule Skogsra.Mixfile do
   defp package do
     [
       description: description(),
-      files: ["lib", "mix.exs", "README.md", ".formatter.exs"],
+      files: ["lib", "mix.exs", "README.md", "CHANGELOG.md", ".formatter.exs"],
       maintainers: ["Alexander de Sousa"],
       licenses: ["MIT"],
       links: %{

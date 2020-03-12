@@ -257,6 +257,27 @@ iex(2)> MyApp.Config.my_port()
 {:error, "Variable port in app myapp is undefined"}
 ```
 
+In order to fail fast when there are missing required variables, it's possible
+to do the following:
+
+```elixir
+defmodule Myapp.Application do
+  @moduledoc false
+  use Application
+
+  def start(_type, _args) do
+    Myapp.Config.validate!()
+
+    (...)
+
+    Supervisor.start_link(children, opts)
+  end
+end
+```
+
+The function `validate!/0` will raise an exception if one or more required
+variables are missing, preventing the application start.
+
 ## Handling different environments
 
 If it's necessary to keep several environments, it's possible to use a
