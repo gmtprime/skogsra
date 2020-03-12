@@ -257,6 +257,19 @@ iex(2)> MyApp.Config.my_port()
 {:error, "Variable port in app myapp is undefined"}
 ```
 
+The module will also provide `validate` and `validate!` functions that can be
+used in your application startup phase to verify that *all* required variables
+are present e.g:
+
+```elixir
+iex(1)> System.get_env("MYAPP_PORT")
+nil
+iex(2)> Application.get_env(:myapp, :port)
+nil
+iex(2)> MyApp.Config.validate!()
+** (RuntimeError) Variable port in app myapp is undefined
+```
+
 ## Handling different environments
 
 If it's necessary to keep several environments, it's possible to use a
