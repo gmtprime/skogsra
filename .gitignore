@@ -25,3 +25,6 @@ erl_crash.dump
 # PLTs
 priv/plts/skogsra.plt
 priv/plts/skogsra.plt.hash
+
+# Language server
+.elixir_ls
