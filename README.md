@@ -429,6 +429,18 @@ the following:
 > **Note**: The same applies for `my_port!/0`, `reload_my_port/0` and
 > `put_my_port/1`.
 
+Specs are generated following the following table:
+
+Assuming the type is set to `:integer` explicitly (`type: :integer`) or
+implicitly (`default: 4000`), the specs should follow the following table:
+
+Required     | Has default     | Spec
+:----------: | :-------------: | :----
+`true`       | `true`          | `@spec my_port() :: {:ok, integer()} \| {:error, binary()}`
+`true`       | `false`         | `@spec my_port() :: {:ok, integer()} \| {:error, binary()}`
+`false`      | `true`          | `@spec my_port() :: {:ok, integer()} \| {:error, binary()}`
+`false`      | `false`         | `@spec my_port() :: {:ok, nil \| integer()} \| {:error, binary()}`
+
 ## Automatic template generation
 
 Every Skogsra module includes the functions `template/1` and `template/2` for
