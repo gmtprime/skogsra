@@ -137,7 +137,7 @@ defmodule Skogsra.Env do
   @doc """
   Gets the type of the `Skogsra` environment variable.
   """
-  @spec type(t()) :: type()
+  @spec type(t()) :: type() | tuple()
   def type(%Env{options: options} = env) do
     with nil <- options[:type] do
       env
