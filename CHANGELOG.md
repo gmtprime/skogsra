@@ -1,5 +1,17 @@
 # Changelog
 
+## Changelog for 2.2.3
+
+### Bugfix
+
+  * When there is no default and it's not required, a variable should have the
+    variable's type and `nil` as return value e.g. for the variable `:my_var`
+    that returns integer, the spec would be as follows:
+
+    ```elixir
+    @spec my_var() :: {:ok, nil | integer()} | {:error, binary()}
+    ```
+
 ## Changelog for 2.2.2
 
 ### Enhancements
