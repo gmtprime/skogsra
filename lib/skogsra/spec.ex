@@ -57,21 +57,30 @@ defmodule Skogsra.Spec do
   # Helpers
 
   # Get the spec type given a configuration.
-  defp get_spec_type(:binary), do: quote(do: binary())
-  defp get_spec_type(:integer), do: quote(do: integer())
-  defp get_spec_type(:float), do: quote(do: float())
-  defp get_spec_type(:boolean), do: quote(do: boolean())
-  defp get_spec_type(:atom), do: quote(do: atom())
-  defp get_spec_type(:module), do: quote(do: module())
-  defp get_spec_type(:unsafe_module), do: quote(do: module())
-  defp get_spec_type(:any), do: quote(do: any())
+  defp get_spec_type(type, present?)
 
-  defp get_spec_type({:__aliases__, _, _} = module),
-    do: quote(do: unquote(module).t())
+  defp get_spec_type(:binary, true), do: quote(do: binary())
+  defp get_spec_type(:integer, true), do: quote(do: integer())
+  defp get_spec_type(:float, true), do: quote(do: float())
+  defp get_spec_type(:boolean, true), do: quote(do: boolean())
+  defp get_spec_type(:atom, true), do: quote(do: atom())
+  defp get_spec_type(:module, true), do: quote(do: module())
+  defp get_spec_type(:unsafe_module, true), do: quote(do: module())
+  defp get_spec_type(:any, true), do: quote(do: any())
+
+  defp get_spec_type({:__aliases__, _, _} = module, true) do
+    quote do: unquote(module).t()
+  end
+
+  defp get_spec_type(other, false) do
+    quote do: nil | unquote(get_spec_type(other, true))
+  end
 
   defp get_spec_type(options) when is_list(options) do
-    %Env{options: options}
-    |> Env.type()
-    |> get_spec_type()
+    env = %Env{options: options}
+    type = Env.type(env)
+    present? = Env.required?(env) or not is_nil(Env.default(env))
+
+    get_spec_type(type, present?)
   end
 end
