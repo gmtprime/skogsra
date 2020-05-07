@@ -12,6 +12,7 @@ defmodule Skogsra do
   end
   ```
   """
+  alias Skogsra.App
   alias Skogsra.Core
   alias Skogsra.Docs
   alias Skogsra.Env
@@ -91,6 +92,19 @@ defmodule Skogsra do
         end
       end
 
+      @doc """
+      Preloads all variables in a `namespace` if supplied.
+      """
+      @spec preload() :: :ok
+      @spec preload(Env.namespace()) :: :ok
+      def preload(namespace \\ nil) do
+        namespace
+        |> __get_all_envs__()
+        |> Enum.each(&App.preload/1)
+
+        :ok
+      end
+
       @spec __get_definitions__(keyword()) :: [Template.t()]
       defp __get_definitions__(options) do
         namespace = options[:namespace]
@@ -108,10 +122,8 @@ defmodule Skogsra do
 
       @spec __get_required_errors__(Env.namespace()) :: [binary()]
       defp __get_required_errors__(namespace) do
-        @definitions
-        |> Stream.map(fn {_docs, name} ->
-          apply(__MODULE__, name, [namespace])
-        end)
+        namespace
+        |> __get_all_envs__()
         |> Stream.filter(&Env.required?/1)
         |> Enum.reduce([], fn env, errors ->
           case Core.get_env(env) do
@@ -122,6 +134,13 @@ defmodule Skogsra do
               [error | errors]
           end
         end)
+      end
+
+      @spec __get_all_envs__(Env.namespace()) :: Stream.t()
+      defp __get_all_envs__(namespace) do
+        @definitions
+        |> Stream.map(&elem(&1, 1))
+        |> Stream.map(&apply(__MODULE__, &1, [namespace]))
       end
     end
   end
