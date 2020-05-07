@@ -381,7 +381,7 @@ config :myapp_web, MyappWeb.Endpoint,
   secret_key_base: secret_key_base
 ```
 
-With Skogsrå we can reduce the config as follows:
+With Skogsrå, we can reduce the config to the following:
 
 ```elixir
 use Mix.Config
