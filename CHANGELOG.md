@@ -1,5 +1,12 @@
 # Changelog
 
+## Changelog for 2.3.0
+
+### Enhancements
+
+  * Added `preload/0` and `preload/1` functions for overriding Elixir config
+    values when config providers and OS system variables have precedence.
+
 ## Changelog for 2.2.3
 
 ### Bugfix

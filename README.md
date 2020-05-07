@@ -72,8 +72,8 @@ Additional topics:
 - [Explicit type casting](#explicit-type-casting).
 - [Explicit OS environment variable names](#explicit-os-environment-variable-name).
 - [Required variables](#required-variables).
-- [Caching variables](#caching-variables).
 - [Overriding Elixir Configuration](#overriding-elixir-configuration).
+- [Caching variables](#caching-variables).
 - [Handling different environments](#handling-different-environments).
 - [Setting and reloading variables](#setting-and-reloading-variables).
 - [Automatic docs generation](#automatic-docs-generation).
@@ -349,26 +349,6 @@ end
 ...
 ```
 
-## Caching variables
-
-By default, Skogsrå caches the values of the variables using
-`:persistent_term` Erlang module. This makes reads very fast, but **writes are
-very slow**.
-
-So avoid setting or reloading values to avoid performance issues (see
-[Setting and reloading variables](#setting-and-reloading-variables)).
-
-If you don't want to cache the values, you can set it to `false`:
-
-```elixir
-defmodule MyApp.Config do
-  use Skogsra
-
-  app_env :value, :myapp, :value,
-    cached: false
-end
-```
-
 ## Overriding Elixir Configuration
 
 Not all the libraries will use Skogsrå and, though is a shame, we can always
@@ -454,6 +434,29 @@ end
 
 The function `MyappWeb.Config.preload/1` will override any configuration for
 `MyappWeb.Endpoint` as long as is a runtime config.
+
+Our app now will try to get the port and secret key from the OS environment
+variables first and it will fallback to the defaults.
+
+## Caching variables
+
+By default, Skogsrå caches the values of the variables using
+`:persistent_term` Erlang module. This makes reads very fast, but **writes are
+very slow**.
+
+So avoid setting or reloading values to avoid performance issues (see
+[Setting and reloading variables](#setting-and-reloading-variables)).
+
+If you don't want to cache the values, you can set it to `false`:
+
+```elixir
+defmodule MyApp.Config do
+  use Skogsra
+
+  app_env :value, :myapp, :value,
+    cached: false
+end
+```
 
 ## Setting and reloading variables
 
