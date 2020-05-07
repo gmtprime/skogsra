@@ -14,6 +14,7 @@ application configuration:
 * Automatic type casting of values.
 * Automatic docs and spec generation.
 * OS environment template generation.
+* Posibility to override Elixir configuration.
 * Runtime reloading.
 * Setting variable's values at runtime.
 * Fast cached values access by using `:persistent_term` as temporal storage.
@@ -72,6 +73,7 @@ Additional topics:
 - [Explicit OS environment variable names](#explicit-os-environment-variable-name).
 - [Required variables](#required-variables).
 - [Caching variables](#caching-variables).
+- [Overriding Elixir Configuration](#overriding-elixir-configuration).
 - [Handling different environments](#handling-different-environments).
 - [Setting and reloading variables](#setting-and-reloading-variables).
 - [Automatic docs generation](#automatic-docs-generation).
@@ -366,6 +368,92 @@ defmodule MyApp.Config do
     cached: false
 end
 ```
+
+## Overriding Elixir Configuration
+
+Not all the libraries will use Skogsrå and, though is a shame, we can always
+override a config value using the function `preload/0` e.g.
+
+Let's say we have a Phoenix application and we want to configure our endpoint
+with the following variables.
+
+- The OS environment variable `PORT` for our app's HTTP port.
+- The OS environment variable `SECRET_KEY_BASE` for our secret key base.
+
+A regular Phoenix configuration will look like the following:
+
+```elixir
+use Mix.Config
+
+secret_key_base =
+  System.get_env("SECRET_KEY_BASE") ||
+    raise """
+    environment variable SECRET_KEY_BASE is missing.
+    You can generate one by calling: mix phx.gen.secret
+    """
+
+
+config :myapp_web, MyappWeb.Endpoint,
+  http: [
+    port: String.to_integer(System.get_env("PORT") || "4000"),
+    transport_options: [socket_opts: [:inet6]]
+  ],
+  secret_key_base: secret_key_base
+```
+
+With Skogsrå we can reduce the config as follows:
+
+```elixir
+use Mix.Config
+
+config :myapp_web, Myapp.Endpoint,
+  http: [
+    transport_options: [socket_opts: [:inet6]]
+  ]
+```
+
+Then, handle our variables in our Skogsrå config module:
+
+```elixir
+defmodule MyappWeb.Config do
+  use Skogsra
+
+  @envdoc """
+  App port.
+  """
+  app_env :port, :myapp, [:http, :port],
+    os_env: "PORT",
+    default: 4000
+
+  @envdoc """
+  Secret key base.
+  """
+  app_env :secret_key_base, :myapp, :secret_key_base,
+    os_env: "SECRET_KEY_BASE",
+    default: "+/JwMGGtsTVOoX5gQrCMn8aHKfKDdUK8GeAKJ2fIUabUnmWTwg+zsCy4pAOmOdTs"
+end
+```
+
+And finally calling the preload function in our application init:
+
+```elixir
+defmodule MyappWeb.Application do
+  use Application
+
+  def start(_type, _args) do
+    MyappWeb.Config.preload(MyappWeb.Endpoint)
+
+    children = [
+      MyappWeb.Endpoint
+    ]
+
+    ...
+  end
+end
+```
+
+The function `MyappWeb.Config.preload/1` will override any configuration for
+`MyappWeb.Endpoint` as long as is a runtime config.
 
 ## Setting and reloading variables
 
@@ -746,7 +834,7 @@ in `mix.exs`.
   ```elixir
   def deps do
     [
-      {:skogsra, "~> 2.2"},
+      {:skogsra, "~> 2.3"},
       {:yamerl, "~> 0.7"}
     ]
   end
@@ -757,7 +845,7 @@ in `mix.exs`.
   ```elixir
   def deps do
     [
-      {:skogsra, "~> 2.2"},
+      {:skogsra, "~> 2.3"},
       {:jason, "~> 1.1"}
     ]
   end

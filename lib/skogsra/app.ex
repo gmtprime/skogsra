@@ -5,6 +5,7 @@ defmodule Skogsra.App do
   """
   use Skogsra.Binding
 
+  alias Skogsra.Core
   alias Skogsra.Env
 
   ##########
@@ -17,6 +18,39 @@ defmodule Skogsra.App do
     value = do_get_env(env)
 
     {:ok, value}
+  end
+
+  ############
+  # Public API
+
+  @doc """
+  Overrides an config value with Skogsra's value.
+  """
+  @spec preload(Env.t()) :: :ok
+  def preload(env)
+
+  def preload(%Env{app_name: app, namespace: nil, keys: [key | keys]} = env) do
+    module = application_module()
+
+    with {:ok, value} when not is_nil(value) <- Core.get_env(env) do
+      config = module.get_env(app, key)
+      new_config = deep_merge(keys, config, value)
+      module.put_env(app, key, new_config)
+    end
+
+    :ok
+  end
+
+  def preload(%Env{app_name: app, namespace: namespace, keys: keys} = env) do
+    module = application_module()
+
+    with {:ok, value} when not is_nil(value) <- Core.get_env(env) do
+      config = module.get_env(app, namespace)
+      new_config = deep_merge(keys, config, value)
+      module.put_env(app, namespace, new_config)
+    end
+
+    :ok
   end
 
   #########
@@ -55,5 +89,17 @@ defmodule Skogsra.App do
   @spec application_module() :: module()
   defp application_module do
     Application.get_env(:skogsra, :application_module, Application)
+  end
+
+  @spec deep_merge([atom()], term(), term()) :: keyword() | term()
+  defp deep_merge([], _, value), do: value
+
+  defp deep_merge([key | keys], config, value) do
+    if Keyword.keyword?(config) do
+      inner = Keyword.get(config, key, [])
+      Keyword.put(config, key, deep_merge(keys, inner, value))
+    else
+      Keyword.put([], key, deep_merge(keys, [], value))
+    end
   end
 end

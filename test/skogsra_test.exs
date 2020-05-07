@@ -269,4 +269,85 @@ defmodule SkogsraTest do
       end
     end
   end
+
+  describe "preload" do
+    defmodule Validate.OneKeyConfig do
+      use Skogsra
+
+      app_env :one_key, :preload_app, :one_key, type: :integer
+    end
+
+    defmodule Validate.SeveralKeyConfig do
+      use Skogsra
+
+      app_env :several_key, :preload_app, [:outer, :inner], type: :integer
+    end
+
+    test "when Skogsrå's single value is not in app config, overrides it" do
+      SystemMock.put_env("PRELOAD_APP_ONE_KEY", "42")
+      ApplicationMock.put_env(:preload_app, :one_key, 21)
+
+      assert :ok = Validate.OneKeyConfig.preload()
+      assert 42 = ApplicationMock.get_env(:preload_app, :one_key)
+    end
+
+    test "when Skogsrå's single value is not in app config using a namespace, overrides it" do
+      SystemMock.put_env("NAMESPACE_PRELOAD_APP_ONE_KEY", "42")
+      ApplicationMock.put_env(:preload_app, Namespace, one_key: 21)
+
+      assert :ok = Validate.OneKeyConfig.preload(Namespace)
+      assert 42 = ApplicationMock.get_env(:preload_app, Namespace)[:one_key]
+    end
+
+    test "when Skogsrå's single value is not in app config, merges it" do
+      SystemMock.put_env("MERGE_PRELOAD_APP_ONE_KEY", "42")
+
+      ApplicationMock.put_env(:preload_app, Merge,
+        one_key: 21,
+        other_key: 21
+      )
+
+      assert :ok = Validate.OneKeyConfig.preload(Merge)
+      assert 42 = ApplicationMock.get_env(:preload_app, Merge)[:one_key]
+      assert 21 = ApplicationMock.get_env(:preload_app, Merge)[:other_key]
+    end
+
+    test "when Skogsrå's nested value is not in app config, overrides it" do
+      SystemMock.put_env("PRELOAD_APP_OUTER_INNER", "42")
+      ApplicationMock.put_env(:preload_app, :outer, inner: 21)
+
+      assert :ok = Validate.SeveralKeyConfig.preload()
+      assert 42 = ApplicationMock.get_env(:preload_app, :outer)[:inner]
+    end
+
+    test "when Skogsrå's nested value is not in app config using a namespace, overrides it" do
+      SystemMock.put_env("NAMESPACE_PRELOAD_APP_OUTER_INNER", "42")
+      ApplicationMock.put_env(:preload_app, Namespace, outer: [inner: 21])
+
+      assert :ok = Validate.SeveralKeyConfig.preload(Namespace)
+
+      assert 42 =
+               ApplicationMock.get_env(:preload_app, Namespace)[:outer][:inner]
+    end
+
+    test "when Skogsrå's nested value is not in app config using a namespace, merges it" do
+      SystemMock.put_env("MERGE_PRELOAD_APP_OUTER_INNER", "42")
+
+      ApplicationMock.put_env(:preload_app, Merge,
+        outer: [inner: 21, inner_other: 21],
+        outer_other: 21
+      )
+
+      assert :ok = Validate.SeveralKeyConfig.preload(Merge)
+
+      assert 42 = ApplicationMock.get_env(:preload_app, Merge)[:outer][:inner]
+
+      assert 21 = ApplicationMock.get_env(:preload_app, Merge)[:outer_other]
+
+      assert 21 =
+               ApplicationMock.get_env(:preload_app, Merge)[:outer][
+                 :inner_other
+               ]
+    end
+  end
 end
