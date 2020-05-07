@@ -100,7 +100,7 @@ defmodule Skogsra do
       def preload(namespace \\ nil) do
         namespace
         |> __get_all_envs__()
-        |> Enum.map(&App.preload/1)
+        |> Enum.each(&App.preload/1)
 
         :ok
       end
