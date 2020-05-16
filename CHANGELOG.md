@@ -1,5 +1,11 @@
 # Changelog
 
+## Changelog for 2.3.1
+
+### Bugfix
+
+  * Multiline docs in templates weren't properly commented.
+
 ## Changelog for 2.3.0
 
 ### Enhancements
