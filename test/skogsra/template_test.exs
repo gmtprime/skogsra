@@ -79,7 +79,7 @@ defmodule Skogsra.TemplateTest do
     test "when docs are present, generates release vars with them",
          %{env: env} do
       template = Template.new(%{docs: "Port", env: env, type: :elixir})
-      expected = "# DOCS Port\n# TYPE integer\nMYAPP_PORT=\"80\"\n\n"
+      expected = "# DOCS\n# Port\n# TYPE integer\nMYAPP_PORT=\"80\"\n\n"
 
       assert ^expected = Template.generate([template])
     end
@@ -87,7 +87,7 @@ defmodule Skogsra.TemplateTest do
     test "when docs are present, generates unix vars with them",
          %{env: env} do
       template = Template.new(%{docs: "Port", env: env, type: :unix})
-      expected = "# DOCS Port\n# TYPE integer\nexport MYAPP_PORT='80'\n\n"
+      expected = "# DOCS\n# Port\n# TYPE integer\nexport MYAPP_PORT='80'\n\n"
 
       assert ^expected = Template.generate([template])
     end
@@ -97,7 +97,37 @@ defmodule Skogsra.TemplateTest do
       template = Template.new(%{docs: "Port", env: env, type: :windows})
 
       expected =
-        ":: DOCS Port\r\n:: TYPE integer\r\nSET MYAPP_PORT=\"80\"\r\n\r\n"
+        ":: DOCS\r\n:: Port\r\n:: TYPE integer\r\nSET MYAPP_PORT=\"80\"\r\n\r\n"
+
+      assert ^expected = Template.generate([template])
+    end
+
+    test "when multiline docs are present, generates release vars with them",
+         %{env: env} do
+      template = Template.new(%{docs: "Port\nStuff", env: env, type: :elixir})
+
+      expected =
+        "# DOCS\n# Port\n# Stuff\n# TYPE integer\nMYAPP_PORT=\"80\"\n\n"
+
+      assert ^expected = Template.generate([template])
+    end
+
+    test "when multiline docs are present, generates unix vars with them",
+         %{env: env} do
+      template = Template.new(%{docs: "Port\nStuff", env: env, type: :unix})
+
+      expected =
+        "# DOCS\n# Port\n# Stuff\n# TYPE integer\nexport MYAPP_PORT='80'\n\n"
+
+      assert ^expected = Template.generate([template])
+    end
+
+    test "when multiline docs are present, generates windows vars with them",
+         %{env: env} do
+      template = Template.new(%{docs: "Port\nStuff", env: env, type: :windows})
+
+      expected =
+        ":: DOCS\r\n:: Port\r\n:: Stuff\r\n:: TYPE integer\r\nSET MYAPP_PORT=\"80\"\r\n\r\n"
 
       assert ^expected = Template.generate([template])
     end
