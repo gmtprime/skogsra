@@ -79,7 +79,7 @@ Additional topics:
 - [Automatic docs generation](#automatic-docs-generation).
 - [Automatic spec generation](#automatic-spec-generation).
 - [Automatic template generation](#automatic-template.generation).
-- [Custom variable bindins](#custom-variable-bindings).
+- [Custom variable bindings](#custom-variable-bindings).
 - [Elixir release YAML and JSON config providers](#elixir-release-yaml-and-json-config-providers).
 - [Using with Hab](#using-with-hab).
 - [Installation](#installation).

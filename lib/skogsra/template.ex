@@ -80,6 +80,8 @@ defmodule Skogsra.Template do
 
   # Generates documentation.
   @spec generate_docs(t()) :: binary()
+  defp generate_docs(template)
+
   defp generate_docs(%__MODULE__{type: :windows, docs: false, env: env}) do
     ":: TYPE #{Env.type(env)}\r\n"
   end
@@ -89,10 +91,30 @@ defmodule Skogsra.Template do
   end
 
   defp generate_docs(%__MODULE__{type: :windows, docs: docs, env: env}) do
-    ":: DOCS #{String.trim(docs)}\r\n:: TYPE #{Env.type(env)}\r\n"
+    ":: DOCS\r\n#{comment_docs(:windows, docs)}\r\n:: TYPE #{Env.type(env)}\r\n"
   end
 
   defp generate_docs(%__MODULE__{docs: docs, env: env}) do
-    "# DOCS #{String.trim(docs)}\n# TYPE #{Env.type(env)}\n"
+    "# DOCS\n#{comment_docs(:unix, docs)}\n# TYPE #{Env.type(env)}\n"
+  end
+
+  # Generates docs for the specific platform.
+  @spec comment_docs(type(), binary()) :: binary()
+  defp comment_docs(type, docs)
+
+  defp comment_docs(:windows, docs) do
+    docs
+    |> String.split(~r/(\r\n|\n)/, trim: true)
+    |> Enum.map(&":: #{&1}")
+    |> Enum.intersperse("\r\n")
+    |> Enum.join("")
+  end
+
+  defp comment_docs(_, docs) do
+    docs
+    |> String.split(~r/(\r\n|\n)/, trim: true)
+    |> Enum.map(&"# #{&1}")
+    |> Enum.intersperse("\n")
+    |> Enum.join("")
   end
 end
