@@ -136,7 +136,7 @@ defmodule Skogsra do
         end)
       end
 
-      @spec __get_all_envs__(Env.namespace()) :: Stream.t()
+      @spec __get_all_envs__(Env.namespace()) :: Enumerable.t()
       defp __get_all_envs__(namespace) do
         @definitions
         |> Stream.map(&elem(&1, 1))

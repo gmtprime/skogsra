@@ -1,5 +1,11 @@
 # Changelog
 
+## Changelog for 2.3.2
+
+### Bugfix
+
+  * Wrong spec in private function.
+
 ## Changelog for 2.3.1
 
 ### Bugfix

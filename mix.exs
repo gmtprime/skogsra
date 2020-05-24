@@ -1,7 +1,7 @@
 defmodule Skogsra.Mixfile do
   use Mix.Project
 
-  @version "2.3.1"
+  @version "2.3.2"
   @root "https://github.com/gmtprime/skogsra"
 
   def project do
