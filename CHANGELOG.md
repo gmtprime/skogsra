@@ -1,5 +1,12 @@
 # Changelog
 
+## Changelog for 2.3.3
+
+### Enhancements
+
+  * Added `:neg_integer`, `:non_neg_integer` and `:pos_integer` as custom
+    types.
+
 ## Changelog for 2.3.2
 
 ### Bugfix
