@@ -8,7 +8,7 @@ defmodule Skogsra.Mixfile do
     [
       app: :skogsra,
       version: @version,
-      elixir: "~> 1.8",
+      elixir: "~> 1.9",
       elixirc_paths: elixirc_paths(Mix.env()),
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
