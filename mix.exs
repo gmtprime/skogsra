@@ -41,12 +41,12 @@ defmodule Skogsra.Mixfile do
 
   defp deps do
     [
-      {:yamerl, "~> 0.7", optional: true},
-      {:jason, "~> 1.1", optional: true},
-      {:ex_doc, "~> 0.21", only: :dev, runtime: false},
-      {:credo, "~> 1.2", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.0.0-rc.7", only: [:dev, :test], runtime: false},
-      {:excoveralls, "~> 0.12", only: :test, runtime: false}
+      {:yamerl, "~> 0.8", optional: true},
+      {:jason, "~> 1.2", optional: true},
+      {:ex_doc, "~> 0.22", only: :dev, runtime: false},
+      {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
+      {:excoveralls, "~> 0.13", only: :test, runtime: false}
     ]
   end
 

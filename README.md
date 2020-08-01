@@ -884,37 +884,37 @@ other files using the command `hab_load <extension>` e.g. loading
 ## Installation
 
 The package can be installed by adding `skogsra` to your list of dependencies
-in `mix.exs`.
+in `mix.exs` (Elixir ≥ 1.9 and Erlang ≥ 22):
 
-- For Elixir ≥ 1.8 and Erlang ≥ 22
+```elixir
+def deps do
+  [
+    {:skogsra, "~> 2.3"}
+  ]
+end
+```
 
-  ```elixir
-  def deps do
-    [{:skogsra, "~> 2.2"}]
-  end
-  ```
+If you need YAML config provider support, add the following:
 
-- For Elixir ≥ 1.9, Erlang ≥ 22 and YAML config provider support:
+```elixir
+def deps do
+  [
+    {:skogsra, "~> 2.3"},
+    {:yamerl, "~> 0.8"}
+  ]
+end
+```
 
-  ```elixir
-  def deps do
-    [
-      {:skogsra, "~> 2.3"},
-      {:yamerl, "~> 0.7"}
-    ]
-  end
-  ```
+If you need JSON config provider support, add  the following:
 
-- For Elixir ≥ 1.9, Erlang ≥ 22 and JSON config provider support:
-
-  ```elixir
-  def deps do
-    [
-      {:skogsra, "~> 2.3"},
-      {:jason, "~> 1.1"}
-    ]
-  end
-  ```
+```elixir
+def deps do
+  [
+    {:skogsra, "~> 2.3"},
+    {:jason, "~> 1.2"}
+  ]
+end
+```
 
 ## Author
 
