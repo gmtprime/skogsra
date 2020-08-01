@@ -40,6 +40,9 @@ defmodule Skogsra.Env do
   @type type ::
           :binary
           | :integer
+          | :neg_integer
+          | :non_neg_integer
+          | :pos_integer
           | :float
           | :boolean
           | :atom

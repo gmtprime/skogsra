@@ -17,6 +17,24 @@ defmodule Skogsra.TypeTest do
       assert {:ok, 42} = Type.cast(env, "42")
     end
 
+    test "casts a negative integer" do
+      env = %Env{options: [type: :neg_integer]}
+
+      assert {:ok, -1} = Type.cast(env, "-1")
+    end
+
+    test "casts a non negative integer" do
+      env = %Env{options: [type: :non_neg_integer]}
+
+      assert {:ok, 0} = Type.cast(env, "0")
+    end
+
+    test "casts a positive integer" do
+      env = %Env{options: [type: :pos_integer]}
+
+      assert {:ok, 1} = Type.cast(env, "1")
+    end
+
     test "casts a float" do
       env = %Env{options: [type: :float]}
 
@@ -46,6 +64,12 @@ defmodule Skogsra.TypeTest do
       env = %Env{options: [type: :unsafe_module]}
 
       assert {:ok, Foo} = Type.cast(env, "Foo")
+    end
+
+    test "does nothing to the value when it's of any type" do
+      env = %Env{options: [type: :any]}
+
+      assert {:ok, "Foo"} = Type.cast(env, "Foo")
     end
 
     test "casts a custom type" do
@@ -102,6 +126,60 @@ defmodule Skogsra.TypeTest do
 
     test "errors when it's other type" do
       assert :error = Type.cast_integer(42.0)
+    end
+  end
+
+  describe "cast_neg_integer/1" do
+    test "casts when is negative integer" do
+      assert {:ok, -1} = Type.cast_neg_integer(-1)
+    end
+
+    test "casts when it's a binary that can be converted to negative integer" do
+      assert {:ok, -1} = Type.cast_neg_integer("-1")
+    end
+
+    test "errors when it's a binary that cannot be converted to negative integer" do
+      assert :error = Type.cast_neg_integer("0")
+    end
+
+    test "errors when it's other type" do
+      assert :error = Type.cast_neg_integer(-1.0)
+    end
+  end
+
+  describe "cast_non_neg_integer/1" do
+    test "casts when is non negative integer" do
+      assert {:ok, 0} = Type.cast_non_neg_integer(0)
+    end
+
+    test "casts when it's a binary that can be converted to non negative integer" do
+      assert {:ok, 0} = Type.cast_non_neg_integer("0")
+    end
+
+    test "errors when it's a binary that cannot be converted to non negative integer" do
+      assert :error = Type.cast_non_neg_integer("-1")
+    end
+
+    test "errors when it's other type" do
+      assert :error = Type.cast_non_neg_integer(0.0)
+    end
+  end
+
+  describe "cast_pos_integer/1" do
+    test "casts when is positive integer" do
+      assert {:ok, 1} = Type.cast_pos_integer(1)
+    end
+
+    test "casts when it's a binary that can be converted to positive integer" do
+      assert {:ok, 1} = Type.cast_pos_integer("1")
+    end
+
+    test "errors when it's a binary that cannot be converted to positive integer" do
+      assert :error = Type.cast_pos_integer("0")
+    end
+
+    test "errors when it's other type" do
+      assert :error = Type.cast_pos_integer(1.0)
     end
   end
 

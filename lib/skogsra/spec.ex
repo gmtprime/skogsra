@@ -61,6 +61,9 @@ defmodule Skogsra.Spec do
 
   defp get_spec_type(:binary, true), do: quote(do: binary())
   defp get_spec_type(:integer, true), do: quote(do: integer())
+  defp get_spec_type(:neg_integer, true), do: quote(do: neg_integer())
+  defp get_spec_type(:non_neg_integer, true), do: quote(do: non_neg_integer())
+  defp get_spec_type(:pos_integer, true), do: quote(do: pos_integer())
   defp get_spec_type(:float, true), do: quote(do: float())
   defp get_spec_type(:boolean, true), do: quote(do: boolean())
   defp get_spec_type(:atom, true), do: quote(do: atom())

@@ -72,12 +72,15 @@ defmodule Skogsra.Type do
   @spec do_cast(Env.type(), term()) :: {:ok, term()} | :error
   def do_cast(:binary, value), do: cast_binary(value)
   def do_cast(:integer, value), do: cast_integer(value)
+  def do_cast(:neg_integer, value), do: cast_neg_integer(value)
+  def do_cast(:non_neg_integer, value), do: cast_non_neg_integer(value)
+  def do_cast(:pos_integer, value), do: cast_pos_integer(value)
   def do_cast(:float, value), do: cast_float(value)
   def do_cast(:boolean, value), do: cast_boolean(value)
   def do_cast(:atom, value), do: cast_atom(value)
   def do_cast(:module, value), do: cast_module(value)
   def do_cast(:unsafe_module, value), do: cast_unsafe_module(value)
-  def do_cast(:any, value), do: value
+  def do_cast(:any, value), do: {:ok, value}
   def do_cast(module, value), do: module.cast(value)
 
   @doc false
@@ -110,6 +113,42 @@ defmodule Skogsra.Type do
 
   def cast_integer(_) do
     :error
+  end
+
+  @doc false
+  @spec cast_neg_integer(term()) :: {:ok, neg_integer()} | :error
+  def cast_neg_integer(value) do
+    case cast_integer(value) do
+      {:ok, value} when value < 0 ->
+        {:ok, value}
+
+      _ ->
+        :error
+    end
+  end
+
+  @doc false
+  @spec cast_non_neg_integer(term()) :: {:ok, non_neg_integer()} | :error
+  def cast_non_neg_integer(value) do
+    case cast_integer(value) do
+      {:ok, value} when value >= 0 ->
+        {:ok, value}
+
+      _ ->
+        :error
+    end
+  end
+
+  @doc false
+  @spec cast_pos_integer(term()) :: {:ok, pos_integer()} | :error
+  def cast_pos_integer(value) do
+    case cast_integer(value) do
+      {:ok, value} when value > 0 ->
+        {:ok, value}
+
+      _ ->
+        :error
+    end
   end
 
   @doc false
