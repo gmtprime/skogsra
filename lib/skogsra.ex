@@ -233,11 +233,14 @@ defmodule Skogsra do
       @spec unquote(definition)() :: Env.t()
       @spec unquote(definition)(namespace :: Env.namespace()) :: Env.t()
       def unquote(definition)(namespace \\ nil) do
-        app_name = unquote(app_name)
-        keys = unquote(keys)
-        options = unquote(options)
-
-        Env.new(namespace, app_name, keys, options)
+        Env.new(%{
+          namespace: namespace,
+          app_name: unquote(app_name),
+          module: __MODULE__,
+          function: unquote(function_name),
+          keys: unquote(keys),
+          options: unquote(options)
+        })
       end
 
       # Function to get the variable's value. Errors when is required and does

@@ -12,7 +12,7 @@ defmodule Skogsra.Env do
   @typedoc """
   Application name.
   """
-  @type app_name :: nil | atom()
+  @type app_name :: atom()
 
   @typedoc """
   Key.
@@ -81,10 +81,7 @@ defmodule Skogsra.Env do
   @doc """
   Environment variable struct.
   """
-  defstruct namespace: nil,
-            app_name: nil,
-            keys: [],
-            options: []
+  defstruct [:namespace, :app_name, :module, :function, :keys, :options]
 
   @typedoc """
   Skogsra environment variable.
@@ -92,6 +89,8 @@ defmodule Skogsra.Env do
   @type t :: %Env{
           namespace: namespace :: namespace(),
           app_name: app_name :: app_name(),
+          module: module :: module(),
+          function: function :: atom(),
           keys: keys :: keys(),
           options: options :: options()
         }
@@ -99,23 +98,33 @@ defmodule Skogsra.Env do
   @doc """
   Creates a new `Skogsra` environment variable.
   """
-  @spec new(namespace(), app_name(), key(), options()) :: t()
-  @spec new(namespace(), app_name(), keys(), options()) :: t()
-  def new(namespace, app_name, keys, options)
+  @spec new(map()) :: t()
+  def new(params)
 
-  def new(namespace, app_name, key, options) when is_atom(key) do
-    new(namespace, app_name, [key], options)
+  def new(%{keys: key} = params) when is_atom(key) do
+    new(%{params | keys: [key]})
   end
 
-  def new(namespace, app_name, keys, options) when is_list(keys) do
-    namespace = if is_nil(namespace), do: options[:namespace], else: namespace
-    options = defaults(options)
+  def new(%{keys: keys, options: options} = params) when is_list(keys) do
+    namespace = params[:namespace] || options[:namespace]
+
+    app_name =
+      params[:app_name] || raise ArgumentError, message: "missing app name"
+
+    module = params[:module] || raise ArgumentError, message: "missing module"
+
+    function =
+      params[:function] || raise ArgumentError, message: "missing function name"
+
+    options = options || []
 
     %Env{
       namespace: namespace,
       app_name: app_name,
+      module: module,
+      function: function,
       keys: keys,
-      options: options
+      options: defaults(options)
     }
   end
 
@@ -140,8 +149,8 @@ defmodule Skogsra.Env do
   @doc """
   Gets the type of the `Skogsra` environment variable.
   """
-  @spec type(t()) :: type() | tuple()
-  def type(%Env{options: options} = env) do
+  @spec type(map() | t()) :: type() | tuple()
+  def type(%{options: options} = env) do
     with nil <- options[:type] do
       env
       |> default()
@@ -152,16 +161,16 @@ defmodule Skogsra.Env do
   @doc """
   Gets the default value for a `Skogsra` environment variable.
   """
-  @spec default(t()) :: term()
-  def default(%Env{options: options}) do
+  @spec default(map() | t()) :: term()
+  def default(%{options: options}) do
     options[:default]
   end
 
   @doc """
   Whether the `Skogsra` environment variable is required or not.
   """
-  @spec required?(t()) :: boolean()
-  def required?(%Env{options: options}) do
+  @spec required?(map() | t()) :: boolean()
+  def required?(%{options: options}) do
     case options[:required] do
       true -> true
       _ -> false

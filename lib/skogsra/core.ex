@@ -123,13 +123,30 @@ defmodule Skogsra.Core do
   end
 
   @spec format_missing_var_error(Env.t()) :: binary()
-  defp format_missing_var_error(env) do
-    keys = Enum.join(env.keys, ", ")
+  defp format_missing_var_error(env)
 
-    if length(env.keys) > 1 do
-      "Variables #{keys} in app #{env.app_name} are undefined"
-    else
-      "Variable #{keys} in app #{env.app_name} is undefined"
-    end
+  defp format_missing_var_error(%Env{keys: [key]} = env) do
+    """
+    Variable for key `#{key}` is undefined for application `#{env.app_name}`:
+
+    - Namespace: #{env.namespace}
+    - Module: #{Macro.to_string(env.module)}
+    - Function: #{env.function}
+    """
+  end
+
+  defp format_missing_var_error(%Env{keys: [_ | _] = keys} = env) do
+    keys =
+      keys
+      |> Stream.map(&"`#{&1}`")
+      |> Enum.join(", ")
+
+    """
+    Variable for keys #{keys} are undefined for application `#{env.app_name}`:
+
+    - Namespace: #{env.namespace}
+    - Module: #{Macro.to_string(env.module)}
+    - Function: #{env.function}
+    """
   end
 end
