@@ -5,7 +5,14 @@ defmodule Skogsra.TemplateTest do
   alias Skogsra.Template
 
   setup do
-    env = Env.new(nil, :myapp, :port, default: 80)
+    env =
+      Env.new(%{
+        app_name: :myapp,
+        module: __MODULE__,
+        function: :function,
+        keys: :port,
+        options: [default: 80]
+      })
 
     {:ok, env: env}
   end
