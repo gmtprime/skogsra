@@ -39,13 +39,21 @@ defmodule Skogsra.Docs do
   end
 
   defp do_gen_full_docs(module, function_name, app_name, keys, options, docs) do
-    module = Macro.to_string(module)
-    env = Env.new(nil, app_name, keys, options)
+    env =
+      Env.new(%{
+        namespace: nil,
+        app_name: app_name,
+        module: module,
+        function: function_name,
+        keys: keys,
+        options: options
+      })
 
     """
     #{insert_custom_docs(docs)}
 
-    Calling `#{module}.#{function_name}()` will ensure the following:
+    Calling `#{Macro.to_string(module)}.#{function_name}()` will ensure the
+    following:
 
     - Binding order: #{inspect(Env.binding_order(env))}
     - OS environment variable: #{inspect(Env.os_env(env))}

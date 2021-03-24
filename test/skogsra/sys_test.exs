@@ -7,7 +7,15 @@ defmodule Skogsra.SysTest do
   describe "get_env/1" do
     setup do
       name = "VAR#{make_ref() |> :erlang.phash2()}"
-      env = Env.new(nil, :system_app, :key, os_env: name)
+
+      env =
+        Env.new(%{
+          app_name: :system_app,
+          module: __MODULE__,
+          function: :function,
+          keys: :key,
+          options: [os_env: name]
+        })
 
       {:ok, env: env}
     end
