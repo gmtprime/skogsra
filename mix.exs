@@ -1,7 +1,7 @@
 defmodule Skogsra.Mixfile do
   use Mix.Project
 
-  @version "2.3.3"
+  @version "2.3.4"
   @root "https://github.com/gmtprime/skogsra"
 
   def project do
@@ -43,10 +43,10 @@ defmodule Skogsra.Mixfile do
     [
       {:yamerl, "~> 0.8", optional: true},
       {:jason, "~> 1.2", optional: true},
-      {:ex_doc, "~> 0.22", only: :dev, runtime: false},
-      {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
-      {:excoveralls, "~> 0.13", only: :test, runtime: false}
+      {:ex_doc, "~> 0.24", only: :dev, runtime: false},
+      {:credo, "~> 1.5", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false},
+      {:excoveralls, "~> 0.14", only: :test, runtime: false}
     ]
   end
 

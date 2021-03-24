@@ -1,15 +1,15 @@
 language: elixir
 elixir:
   - 1.9.4
-  - 1.10.4
+  - 1.11.4
 otp_release:
   - 22.3.4
-  - 23.0.3
+  - 23.3.0
 matrix:
   exclude:
     - elixir: 1.9.4
-      otp_release: 23.0.3
-    - elixir: 1.10.4
+      otp_release: 23.3.0
+    - elixir: 1.11.4
       otp_release: 22.3.4
 env:
   - MIX_ENV=test
