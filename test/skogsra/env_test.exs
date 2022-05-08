@@ -158,6 +158,11 @@ defmodule Skogsra.EnvTest do
       assert :float == Env.get_type(42.0)
     end
 
+    test "when boolean" do
+      assert :boolean == Env.get_type(true)
+      assert :boolean == Env.get_type(false)
+    end
+
     test "when atom" do
       assert :atom == Env.get_type(:atom)
     end
