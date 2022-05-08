@@ -223,10 +223,14 @@ if Code.ensure_loaded?(Config.Provider) and Code.ensure_loaded?(:yamerl) do
       "#{value}"
     end
 
-    defp expand_value(values) when is_list(values) do
+    defp expand_value([{_, _} | _] = values) do
       values
       |> Enum.map(&expand_variable/1)
       |> List.flatten()
+    end
+
+    defp expand_value(values) when is_list(values) do
+      Enum.map(values, &expand_value/1)
     end
 
     defp expand_value(value) do

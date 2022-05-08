@@ -158,6 +158,25 @@ if Code.ensure_loaded?(Config.Provider) do
         assert [] = Yaml.load([], path)
       end
 
+      test "reads normal lists" do
+        path = path("with_lists.yml")
+
+        assert [
+                 my_app: [
+                   {
+                     MyApp.Endpoint,
+                     [
+                       check_origin: [
+                         "mydomain",
+                         "www.mydomain",
+                         "subdomain.mydomain"
+                       ]
+                     ]
+                   }
+                 ]
+               ] = Yaml.load([], path)
+      end
+
       test "returns same config if an app name is not defined" do
         path = path("no_app_name.yml")
         assert [] = Yaml.load([], path)
