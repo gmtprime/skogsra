@@ -41,10 +41,10 @@ hostname in the following order:
 1. From the OS environment variable `$MYAPP_HOSTNAME` (can be overriden by the
    option `os_env`).
 2. From the configuration file e.g:
-     ```elixir
-     config :myapp,
-       hostname: "my.custom.host"
-     ```
+   ```elixir
+   config :myapp,
+     hostname: "my.custom.host"
+   ```
 3. From the default value if it exists (In this case, it would return
    `"localhost"`).
 
@@ -354,16 +354,16 @@ in the following order:
 
 1. From the OS environment variable `$TEST_MYAPP_PORT`.
 2. From the configuration file e.g:
-    ```elixir
-    config :myapp, Test,
-      port: 4001
-    ```
+   ```elixir
+   config :myapp, Test,
+     port: 4001
+   ```
 3. From the OS environment variable `$MYAPP_PORT`.
 4. From the configuraton file e.g:
-    ```elixir
-    config :myapp,
-      port: 80
-    ```
+   ```elixir
+   config :myapp,
+     port: 80
+   ```
 5. From the default value if it exists. In our example, `4000`.
 
 The ability of loading different environments allows us to do the following
@@ -889,7 +889,7 @@ in `mix.exs` (Elixir ≥ 1.9 and Erlang ≥ 22):
 ```elixir
 def deps do
   [
-    {:skogsra, "~> 2.3"}
+    {:skogsra, "~> 2.4"}
   ]
 end
 ```
@@ -899,8 +899,8 @@ If you need YAML config provider support, add the following:
 ```elixir
 def deps do
   [
-    {:skogsra, "~> 2.3"},
-    {:yamerl, "~> 0.8"}
+    {:skogsra, "~> 2.4"},
+    {:yamerl, "~> 0.10"}
   ]
 end
 ```
@@ -910,8 +910,8 @@ If you need JSON config provider support, add  the following:
 ```elixir
 def deps do
   [
-    {:skogsra, "~> 2.3"},
-    {:jason, "~> 1.2"}
+    {:skogsra, "~> 2.4"},
+    {:jason, "~> 1.3"}
   ]
 end
 ```

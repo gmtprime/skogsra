@@ -192,10 +192,10 @@ defmodule Skogsra do
   1. From the OS environment variable `$MYAPP_MYDB_PASSWORD` (can be overriden
      by the option `os_env`).
   2. From the configuration file e.g:
-      ```
-      config :myapp,
-        mydb: [password: "some password"]
-      ```
+     ```
+     config :myapp,
+       mydb: [password: "some password"]
+     ```
   3. From the default value if it exists (In this case, it would return
      `"password"`).
 
@@ -203,16 +203,16 @@ defmodule Skogsra do
 
   1. From the OS environment variable `$TEST_MYAPP_MYDB_PASSWORD`.
   2. From the configuration file e.g:
-      ```
-      config :myapp, Test,
-        mydb: [password: "some test password"]
-      ```
+     ```
+     config :myapp, Test,
+       mydb: [password: "some test password"]
+     ```
   3. From the OS environment variable `$MYAPP_MYDB_PASSWORDT`.
   4. From the configuraton file e.g:
-      ```
-      config :myapp,
-        mydb: [password: "some password"]
-      ```
+     ```
+     config :myapp,
+       mydb: [password: "some password"]
+     ```
   5. From the default value if it exists. In our example, `"password"`.
   """
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
