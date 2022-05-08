@@ -1,0 +1,70 @@
+name: Skogsrå Checks
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  MIX_ENV: test
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        elixir: [1.13.4]
+        otp: [24.3.4]
+    env:
+      MIX_ENV: "test"
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-elixir@v1
+        name: "Setup Elixir"
+        with:
+          experimental-otp: true
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+      - name: "Get dependencies"
+        run: mix do local.rebar --force, local.hex --force, deps.get
+      - name: "Compile dependencies"
+        run: mix deps.compile
+      - name: "Compile project"
+        run: mix compile --warnings-as-errors
+      - name: "Check formatting"
+        run: mix format --dry-run --check-formatted
+      - name: "Run tests with coverage"
+        run: mix coveralls.github
+      - name: "Run Credo"
+        run: mix credo
+
+  dialyzer:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        elixir: [1.13.4]
+        otp: [24.3.4]
+    env:
+      MIX_ENV: "dev"
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-elixir@v1
+        name: "Setup Elixir"
+        with:
+          experimental-otp: true
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+      - uses: actions/cache@v1
+        name: "Retrieves cached PLT"
+        id: plt-cache
+        with:
+          path: priv/plts
+          key: ${{ runner.os }}-${{ matrix.otp }}-${{ matrix.elixir }}-plts-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
+      - name: "Get dependencies"
+        run: mix do local.rebar --force, local.hex --force, deps.get
+      - name: "Compile dependencies"
+        run: mix deps.compile
+      - name: "Run Dialyzer"
+        run: mix dialyzer
