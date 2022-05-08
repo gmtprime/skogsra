@@ -15,7 +15,12 @@ defmodule Skogsra.Mixfile do
       name: "Skogsrå",
       dialyzer: dialyzer(),
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [coveralls: :test, "coveralls.travis": :test],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.html": :test,
+        "coveralls.github": :test
+      ],
       package: package(),
       deps: deps(),
       docs: docs()
