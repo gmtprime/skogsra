@@ -1,0 +1,4 @@
+- app: "my_app"
+  namespace: "MyApp.Endpoint"
+  config:
+    check_origin: ["mydomain", "www.mydomain", "subdomain.mydomain"]
