@@ -1,5 +1,15 @@
 # Changelog
 
+## Changelog for 2.4.0
+
+### Bugfix
+
+  * Bugfix: [YAML Provider] fixed bug where it would duplicate apps.
+  * Bugfix: [YAML Provider] fixed bug where regular lists weren't accepted as values.
+  * Migrated pipeline from Travis to Github Actions.
+  * Improved code coverage.
+  * Updated dependencies.
+
 ## Changelog for 2.3.3
 
 ### Enhancements
