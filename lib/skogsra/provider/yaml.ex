@@ -85,8 +85,8 @@ if Code.ensure_loaded?(Config.Provider) and Code.ensure_loaded?(:yamerl) do
     defp load_config([], acc) do
       config =
         acc
-        |> Enum.reverse()
         |> List.flatten()
+        |> merge_duplicates()
 
       {:ok, config}
     end
@@ -95,6 +95,29 @@ if Code.ensure_loaded?(Config.Provider) and Code.ensure_loaded?(:yamerl) do
       with {:ok, config} <- load_app_config(yml) do
         load_config(rest, [config | acc])
       end
+    end
+
+    @spec merge_duplicates(keyword()) :: keyword()
+    defp merge_duplicates(config)
+
+    defp merge_duplicates(config) when is_list(config) do
+      config
+      |> Enum.reduce(%{}, &do_merge_duplicates/2)
+      |> Enum.to_list()
+    end
+
+    @spec do_merge_duplicates({atom(), term()}, map()) :: map()
+    defp do_merge_duplicates(pair, acc)
+
+    defp do_merge_duplicates({key, [{_, _} | _] = value}, acc) do
+      Map.update(acc, key, value, fn
+        [{_, _} | _] = existing -> merge_duplicates(existing ++ value)
+        _existing -> merge_duplicates(value)
+      end)
+    end
+
+    defp do_merge_duplicates({key, value}, acc) do
+      Map.put(acc, key, value)
     end
 
     # Loads an app config from a YAML parsed document.
