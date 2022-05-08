@@ -1,0 +1,26 @@
+- app: "yggdrasil"
+  namespace: "MyApp.Namespace"
+  config:
+    rabbitmq:
+      username: "rabbitmq_username"
+      password: "rabbitmq_password"
+      hostname: "localhost"
+      port: 7652
+- app: "yggdrasil"
+  namespace: "MyApp.Namespace"
+  config:
+    postgres:
+      username: "postgres_username"
+      password: "postgres_password"
+      database: "postgres_database"
+      hostname: "localhost"
+      port: 5432
+- app: "yggdrasil"
+  namespace: "MyApp.OtherNamespace"
+  config:
+    postgres:
+      username: "postgres_username"
+      password: "postgres_password"
+      database: "postgres_database"
+      hostname: "localhost"
+      port: 5432

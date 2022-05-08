@@ -89,6 +89,15 @@ if Code.ensure_loaded?(Config.Provider) do
         path = path("several_apps.yml")
 
         assert [
+                 skogsra: [
+                   {
+                     MyApp.Namespace,
+                     [
+                       system_module: "Sys",
+                       application_module: "App"
+                     ]
+                   }
+                 ],
                  yggdrasil: [
                    {
                      MyApp.Namespace,
@@ -101,13 +110,43 @@ if Code.ensure_loaded?(Config.Provider) do
                        ]
                      ]
                    }
-                 ],
-                 skogsra: [
+                 ]
+               ] = Yaml.load([], path)
+      end
+
+      test "reads a YAML with duplicate apps and merges them" do
+        path = path("duplicate_apps.yml")
+
+        assert [
+                 yggdrasil: [
                    {
                      MyApp.Namespace,
                      [
-                       system_module: "Sys",
-                       application_module: "App"
+                       postgres: [
+                         username: "postgres_username",
+                         password: "postgres_password",
+                         database: "postgres_database",
+                         hostname: "localhost",
+                         port: 5432
+                       ],
+                       rabbitmq: [
+                         username: "rabbitmq_username",
+                         password: "rabbitmq_password",
+                         hostname: "localhost",
+                         port: 7652
+                       ]
+                     ]
+                   },
+                   {
+                     MyApp.OtherNamespace,
+                     [
+                       postgres: [
+                         username: "postgres_username",
+                         password: "postgres_password",
+                         database: "postgres_database",
+                         hostname: "localhost",
+                         port: 5432
+                       ]
                      ]
                    }
                  ]
