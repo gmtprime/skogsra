@@ -1,5 +1,12 @@
 # Changelog
 
+## Changelog for 2.4.1
+
+### Bugfix
+
+  * Bugfix: Documentation generation throwed warnings for custom Skogsra types.
+  * Updated dependencies.
+
 ## Changelog for 2.4.0
 
 ### Bugfix

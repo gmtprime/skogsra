@@ -46,7 +46,7 @@ defmodule Skogsra.Binding do
       cast(module, env, value)
     else
       {:error, reason} ->
-        Logger.warn(reason, module: module, env: env, value: nil)
+        Logger.warn(reason)
         nil
 
       _ ->
@@ -64,11 +64,12 @@ defmodule Skogsra.Binding do
         value
 
       :error ->
-        reason =
-          "Cannot cast #{inspect(value)} " <>
-            " for environment variable #{inspect(env)}"
+        reason = """
+        Cannot cast #{inspect(value)} for environment variable #{inspect(env)}
+        Module: #{inspect(module)})
+        """
 
-        Logger.warn(reason, module: module, env: env, value: value)
+        Logger.warn(reason)
 
         nil
     end

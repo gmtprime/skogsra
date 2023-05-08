@@ -38,7 +38,9 @@ defmodule Skogsra.Type do
     quote do
       @behaviour Skogsra.Type
 
-      @typedoc false
+      @typedoc """
+      Type for #{__MODULE__}.
+      """
       @type t :: term()
 
       def cast(value) do

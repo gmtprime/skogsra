@@ -13,20 +13,15 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        elixir: [1.13.4]
-        otp: [24.3.4]
     env:
       MIX_ENV: "test"
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-elixir@v1
+      - uses: erlef/setup-beam@v1
         name: "Setup Elixir"
         with:
-          experimental-otp: true
-          otp-version: ${{ matrix.otp }}
-          elixir-version: ${{ matrix.elixir }}
+          otp-version: "25.3"
+          elixir-version: "1.14.3"
       - name: "Get dependencies"
         run: mix do local.rebar --force, local.hex --force, deps.get
       - name: "Compile dependencies"
@@ -42,20 +37,15 @@ jobs:
 
   dialyzer:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        elixir: [1.13.4]
-        otp: [24.3.4]
     env:
       MIX_ENV: "dev"
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-elixir@v1
+      - uses: erlef/setup-beam@v1
         name: "Setup Elixir"
         with:
-          experimental-otp: true
-          otp-version: ${{ matrix.otp }}
-          elixir-version: ${{ matrix.elixir }}
+          otp-version: "25.3"
+          elixir-version: "1.14.3"
       - uses: actions/cache@v1
         name: "Retrieves cached PLT"
         id: plt-cache

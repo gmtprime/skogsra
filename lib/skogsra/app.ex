@@ -64,9 +64,9 @@ defmodule Skogsra.App do
   end
 
   defp do_get_env(%Env{} = env) do
-    application_module()
-    |> apply(:get_env, [env.app_name, env.namespace])
-    |> lookup(env.keys)
+    value = apply(application_module(), :get_env, [env.app_name, env.namespace])
+
+    lookup(value, env.keys)
   end
 
   @spec lookup(term(), Env.keys()) :: nil | term()
