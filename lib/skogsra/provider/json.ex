@@ -56,7 +56,7 @@ if Code.ensure_loaded?(Config.Provider) and Code.ensure_loaded?(Jason) do
         Config.Reader.merge(config, new_config)
       else
         {:error, reason} ->
-          Logger.warn(
+          Logger.warning(
             "File #{path} cannot be read/loaded " <>
               "due to #{inspect(reason)}"
           )

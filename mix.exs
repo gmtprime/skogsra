@@ -1,7 +1,7 @@
 defmodule Skogsra.Mixfile do
   use Mix.Project
 
-  @version "2.4.1"
+  @version "2.4.2"
   @name "Skogsrå"
   @description "Manages OS environment variables and application configuration options with ease"
   @app :skogsra
@@ -44,12 +44,12 @@ defmodule Skogsra.Mixfile do
 
   defp deps do
     [
-      {:jason, "~> 1.3", optional: true},
+      {:jason, "~> 1.4", optional: true},
       {:yamerl, "~> 0.10", optional: true},
-      {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.1", only: [:dev, :test], runtime: false},
-      {:ex_doc, "~> 0.28", only: :dev, runtime: false},
-      {:excoveralls, "~> 0.14", only: :test, runtime: false}
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:ex_doc, "~> 0.30", only: :dev, runtime: false},
+      {:excoveralls, "~> 0.18", only: :test, runtime: false}
     ]
   end
 

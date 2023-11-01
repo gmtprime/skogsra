@@ -53,7 +53,7 @@ if Code.ensure_loaded?(Config.Provider) and Code.ensure_loaded?(:yamerl) do
         Config.Reader.merge(config, new_config)
       else
         {:error, reason} ->
-          Logger.warn(
+          Logger.warning(
             "File #{path} cannot be read/loaded " <>
               "due to #{inspect(reason)}"
           )
@@ -142,7 +142,7 @@ if Code.ensure_loaded?(Config.Provider) and Code.ensure_loaded?(:yamerl) do
     defp get_app(nodes) when is_list(nodes) do
       value =
         nodes
-        |> get_key!('app')
+        |> get_key!(~c"app")
         |> to_atom()
 
       {:ok, value}
@@ -154,7 +154,7 @@ if Code.ensure_loaded?(Config.Provider) and Code.ensure_loaded?(:yamerl) do
     # Gets namespace for an app.
     @spec get_namespace(list()) :: {:ok, module()} | {:error, term()}
     defp get_namespace(nodes) do
-      case get_key(nodes, 'namespace') do
+      case get_key(nodes, ~c"namespace") do
         nil ->
           {:ok, nil}
 
@@ -175,7 +175,7 @@ if Code.ensure_loaded?(Config.Provider) and Code.ensure_loaded?(:yamerl) do
     # Gets module to be configured.
     @spec get_module(list()) :: {:ok, module()} | {:error, term()}
     defp get_module(nodes) do
-      case get_key(nodes, 'module') do
+      case get_key(nodes, ~c"module") do
         nil ->
           {:ok, nil}
 
@@ -198,7 +198,7 @@ if Code.ensure_loaded?(Config.Provider) and Code.ensure_loaded?(:yamerl) do
     defp get_config(nodes) do
       value =
         nodes
-        |> get_key!('config')
+        |> get_key!(~c"config")
         |> Enum.map(&expand_variable/1)
         |> List.flatten()
 

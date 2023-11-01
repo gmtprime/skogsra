@@ -20,8 +20,8 @@ jobs:
       - uses: erlef/setup-beam@v1
         name: "Setup Elixir"
         with:
-          otp-version: "25.3"
-          elixir-version: "1.14.3"
+          otp-version: "26.1.2"
+          elixir-version: "1.15.7"
       - name: "Get dependencies"
         run: mix do local.rebar --force, local.hex --force, deps.get
       - name: "Compile dependencies"
@@ -44,8 +44,8 @@ jobs:
       - uses: erlef/setup-beam@v1
         name: "Setup Elixir"
         with:
-          otp-version: "25.3"
-          elixir-version: "1.14.3"
+          otp-version: "26.1.2"
+          elixir-version: "1.15.7"
       - uses: actions/cache@v1
         name: "Retrieves cached PLT"
         id: plt-cache

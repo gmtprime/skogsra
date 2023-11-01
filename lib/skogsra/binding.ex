@@ -46,7 +46,7 @@ defmodule Skogsra.Binding do
       cast(module, env, value)
     else
       {:error, reason} ->
-        Logger.warn(reason)
+        Logger.warning(reason)
         nil
 
       _ ->
@@ -69,7 +69,7 @@ defmodule Skogsra.Binding do
         Module: #{inspect(module)})
         """
 
-        Logger.warn(reason)
+        Logger.warning(reason)
 
         nil
     end
