@@ -884,7 +884,7 @@ other files using the command `hab_load <extension>` e.g. loading
 ## Installation
 
 The package can be installed by adding `skogsra` to your list of dependencies
-in `mix.exs` (Elixir ≥ 1.9 and Erlang ≥ 22):
+in `mix.exs` (Elixir ≥ 1.11 and Erlang ≥ 22):
 
 ```elixir
 def deps do
@@ -911,7 +911,7 @@ If you need JSON config provider support, add  the following:
 def deps do
   [
     {:skogsra, "~> 2.4"},
-    {:jason, "~> 1.3"}
+    {:jason, "~> 1.4"}
   ]
 end
 ```

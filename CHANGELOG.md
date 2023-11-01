@@ -1,5 +1,13 @@
 # Changelog
 
+## Changelog for 2.4.2
+
+### Bugfix
+
+  * Change from `Logger.warn/1` to `Logger.warning/1` to avoid deprecation
+    message on compile time.
+  * Updated dependencies.
+
 ## Changelog for 2.4.1
 
 ### Bugfix
