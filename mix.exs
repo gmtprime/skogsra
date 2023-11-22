@@ -1,7 +1,7 @@
 defmodule Skogsra.Mixfile do
   use Mix.Project
 
-  @version "2.4.2"
+  @version "2.5.0"
   @name "Skogsrå"
   @description "Manages OS environment variables and application configuration options with ease"
   @app :skogsra

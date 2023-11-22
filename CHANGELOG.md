@@ -1,5 +1,12 @@
 # Changelog
 
+## Changelog for 2.5.0
+
+### Enhancements
+
+  * Added `env_overrides` for overriding  `default` and `required` attributes
+    per environment (e.g. `dev`, `test`, `prod`).
+
 ## Changelog for 2.4.2
 
 ### Bugfix
