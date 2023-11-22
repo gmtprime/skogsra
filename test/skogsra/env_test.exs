@@ -68,6 +68,16 @@ defmodule Skogsra.EnvTest do
 
       assert 42 = Env.default(env)
     end
+
+    test "should get the default value for the current environment" do
+      env =
+        Env.new(nil, :app, :key,
+          default: 0,
+          env_overrides: [test: [default: 42]]
+        )
+
+      assert 42 = Env.default(env)
+    end
   end
 
   describe "required?/1" do
@@ -79,6 +89,16 @@ defmodule Skogsra.EnvTest do
 
     test "gets value for required if set" do
       env = Env.new(nil, :app, :key, required: true)
+
+      assert Env.required?(env)
+    end
+
+    test "should get the required value for the current environment" do
+      env =
+        Env.new(nil, :app, :key,
+          required: false,
+          env_overrides: [test: [required: true]]
+        )
 
       assert Env.required?(env)
     end
@@ -169,6 +189,12 @@ defmodule Skogsra.EnvTest do
 
     test "when other" do
       assert :any == Env.get_type([])
+    end
+  end
+
+  describe "find_environment/0" do
+    test "should get the current environment" do
+      assert :test = Env.find_environment()
     end
   end
 end

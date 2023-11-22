@@ -39,6 +39,20 @@ defmodule Skogsra.CoreTest do
 
       assert {:error, ^expected} = Core.get_env(env)
     end
+
+    test "when value is required for the environment, returns error message" do
+      options = [
+        required: false,
+        env_overrides: [test: [required: true]],
+        binding_skip: [:system, :config]
+      ]
+
+      env = Env.new(nil, :core_app, :key, options)
+
+      expected = "Variable key in app core_app is undefined"
+
+      assert {:error, ^expected} = Core.get_env(env)
+    end
   end
 
   describe "get_env!/1" do
@@ -55,6 +69,17 @@ defmodule Skogsra.CoreTest do
       env = Env.new(nil, :core_app, :key, options)
 
       assert is_nil(Core.get_env!(env))
+    end
+
+    test "when doesn't exist, returns environment default" do
+      options = [
+        binding_skip: [:system, :config],
+        env_overrides: [test: [default: 42]]
+      ]
+
+      env = Env.new(nil, :core_app, :key, options)
+
+      assert 42 = Core.get_env!(env)
     end
 
     test "when doesn't exist and it's required, fails" do
