@@ -61,6 +61,7 @@ defmodule Skogsra.Env do
   - `default` - Default value.
   - `required` - Whether the variable is required or not.
   - `cached` - Whether the variable is cached or not.
+  - `env_overrides` - Options overrides for specific environments.
   """
   @type option ::
           {:binding_order, bindings()}
@@ -71,6 +72,7 @@ defmodule Skogsra.Env do
           | {:default, term()}
           | {:required, boolean()}
           | {:cached, boolean()}
+          | {:env_overrides, keyword()}
           | {atom(), term()}
 
   @typedoc """
@@ -154,7 +156,11 @@ defmodule Skogsra.Env do
   """
   @spec default(t()) :: term()
   def default(%Env{options: options}) do
-    options[:default]
+    env = find_environment()
+    global = [default: options[:default]]
+    overrides = options[:env_overrides][env] || global
+
+    overrides[:default]
   end
 
   @doc """
@@ -162,10 +168,13 @@ defmodule Skogsra.Env do
   """
   @spec required?(t()) :: boolean()
   def required?(%Env{options: options}) do
-    case options[:required] do
-      true -> true
-      _ -> false
-    end
+    env = find_environment()
+    global = [required: options[:required]]
+    overrides = options[:env_overrides][env] || global
+
+    required = overrides[:required]
+
+    if is_boolean(required), do: required, else: false
   end
 
   @doc """
@@ -200,7 +209,8 @@ defmodule Skogsra.Env do
       :namespace,
       :default,
       :required,
-      :cached
+      :cached,
+      :env_overrides
     ]
 
     Keyword.drop(options, keys)
@@ -215,6 +225,7 @@ defmodule Skogsra.Env do
     options
     |> Keyword.put_new(:required, false)
     |> Keyword.put_new(:cached, true)
+    |> Keyword.put_new(:env_overrides, [])
     |> set_binding_order()
     |> set_binding_skip()
   end
@@ -309,4 +320,28 @@ defmodule Skogsra.Env do
   def get_type(value) when is_boolean(value), do: :boolean
   def get_type(value) when is_atom(value), do: :atom
   def get_type(_), do: :any
+
+  @env_name {Env, :env_name}
+
+  @doc false
+  @spec find_environment() :: atom()
+  def find_environment do
+    with :miss <- :persistent_term.get(@env_name, :miss) do
+      Code.ensure_loaded!(Mix)
+
+      if function_exported?(Mix, :env, 0) do
+        Mix
+        |> apply(:env, [])
+        |> tap(&:persistent_term.put(@env_name, &1))
+      else
+        raise RuntimeError, message: "No mix project defined"
+      end
+    end
+  rescue
+    _ ->
+      "MIX_ENV"
+      |> System.get_env("prod")
+      |> String.to_atom()
+      |> tap(&:persistent_term.put(@env_name, &1))
+  end
 end

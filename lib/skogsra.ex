@@ -165,6 +165,7 @@ defmodule Skogsra do
   `required`      | `boolean`               | `false`              | Whether the variable is required or not.
   `cached`        | `boolean`               | `true`               | Whether the variable should be cached or not.
   `namespace`     | `module`                | `nil`                | Overrides any namespace.
+  `env_overrides` | `keyword`               | `[]`                 | Overrides `default` and `required` properties for a specific environment.
 
   e.g:
 
