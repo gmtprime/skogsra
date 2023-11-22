@@ -31,7 +31,10 @@ defmodule MyApp.Config do
 
   @envdoc "My hostname"
   app_env :my_hostname, :myapp, :hostname,
-    default: "localhost"
+    default: "localhost",
+    env_overrides: [
+      prod: [default: "example.com"]
+    ]
 end
 ```
 
@@ -45,8 +48,9 @@ hostname in the following order:
    config :myapp,
      hostname: "my.custom.host"
    ```
-3. From the default value if it exists (In this case, it would return
-   `"localhost"`).
+3. From the default value if it exists. In this case, it would return
+   `"localhost"` for all environments except `prod`. For `prod`, it will
+   return `example.com`.
 
 ## Available options
 
@@ -61,6 +65,7 @@ Option          | Type                                                 | Default
 `binding_skip`  | [`Skogra.Env.bindings()`](#custom-variable-bindings) | `[]`                 | Which variable bindings should be skipped.
 `required`      | `boolean`                                            | `false`              | Whether the variable is required or not.
 `cached`        | `boolean`                                            | `true`               | Whether the variable should be cached or not.
+`env_overrides` | `keyword`                                            | `[]`                 | Overrides `default` and `required` properties for a specific environment.
 
 > **IMPORTANT**: Options `skip_system: true` and `skip_config: true` have been
 > deprecated in favour of `binding_skip: [:system]` and `binding_skip: [:config]`
@@ -75,6 +80,7 @@ Additional topics:
 - [Explicit OS environment variable names](#explicit-os-environment-variable-name).
 - [Required variables](#required-variables).
 - [Overriding Elixir Configuration](#overriding-elixir-configuration).
+- [Overriding Environment Configuration](#overriding-environment-configuration).
 - [Caching variables](#caching-variables).
 - [Handling different environments](#handling-different-environments).
 - [Setting and reloading variables](#setting-and-reloading-variables).
@@ -499,6 +505,92 @@ The function `MyappWeb.Config.preload/1` will override any configuration for
 
 Our app now will try to get the port and secret key from the OS environment
 variables first and it will fallback to the defaults.
+
+## Overriding Environment Configuration
+
+Sometimes we need different requirements for different environments (e.g. `dev`,
+`test`, `prod`). With Skogsrå you can define both `default` and `required`
+attributes for each environment using `env_overrides`:
+
+1. First searches the environment using `Mix.env()`.
+2. If `Mix` is not present, it tries to get the value from  the `MIX_ENV` OS
+   environment variable.
+3. Finally, if all fails, defaults to `prod`.
+
+If for certain environment there are no `default` and/or `required` attributes
+defined, then it'll use the global `default` and/or `required` attributes.
+
+E.g. let's say our database configuration requires `username`, `password`,
+`hostname`, `port` and `database` for `dev` and `test` environments, but not for
+our `prod` environment where we use a `url` instead. Then we would do the
+following:
+
+```elixir
+defmodule Myapp.Config do
+  use Skogsra
+
+  @envdoc "DB username"
+  app_env :db_username, :myapp, [Myapp.Repo, :username],
+    env_overrides: [
+      dev: [default: "postgres"],
+      test: [default: "postgres"]
+    ]
+
+  @envdoc "DB password"
+  app_env :db_password, :myapp, [Myapp.Repo, :password],
+    env_overrides: [
+      dev: [default: "postgres"],
+      test: [default: "postgres"]
+    ]
+
+  @envdoc "DB hostname"
+  app_env :db_hostname, :myapp, [Myapp.Repo, :hostname],
+    env_overrides: [
+      dev: [default: "localhost"],
+      test: [default: "localhost"]
+    ]
+
+  @envdoc "DB port"
+  app_env :db_port, :myapp, [Myapp.Repo, :port],
+    env_overrides: [
+      dev: [default: 5432],
+      test: [default: 5432]
+    ]
+
+  @envdoc "DB name"
+  app_env :db_name, :myapp, [Myapp.Repo, :database],
+    env_overrides: [
+      dev: [default: "myapp_dev"],
+      test: [default: "myapp_test"]
+    ]
+
+  @envdoc "DB URL"
+  app_env :db_url, :myapp, [Myapp.Repo, :url],
+    os_env: "DATABASE_URL",
+    env_overrides: [
+      prod: [required: true]
+    ]
+end
+```
+
+Both `dev` and `test` environments have default values for the `username`,
+`password`, `hostname`, `port` and `database` configuration variables while
+the `url` value is `nil` by default.
+
+However, for `prod` enviroment, there are no defaults and all of them are
+actually `nil`. Instead, `prod` requires for the `url` to be defined and it
+doesn't provide any `default` value.
+
+If the OS environment variable `DATABASE_URL` is not defined and the following
+is called before our application start:
+
+```elixir
+Myapp.Config.preload()
+Myapp.Config.validate()
+```
+
+then our application will fail to start on `prod` environment, but not for `dev`
+or `test`.
 
 ## Caching variables
 
