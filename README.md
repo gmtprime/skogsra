@@ -981,7 +981,7 @@ in `mix.exs` (Elixir ≥ 1.11 and Erlang ≥ 22):
 ```elixir
 def deps do
   [
-    {:skogsra, "~> 2.4"}
+    {:skogsra, "~> 2.5"}
   ]
 end
 ```
@@ -991,7 +991,7 @@ If you need YAML config provider support, add the following:
 ```elixir
 def deps do
   [
-    {:skogsra, "~> 2.4"},
+    {:skogsra, "~> 2.5"},
     {:yamerl, "~> 0.10"}
   ]
 end
@@ -1002,7 +1002,7 @@ If you need JSON config provider support, add  the following:
 ```elixir
 def deps do
   [
-    {:skogsra, "~> 2.4"},
+    {:skogsra, "~> 2.5"},
     {:jason, "~> 1.4"}
   ]
 end
