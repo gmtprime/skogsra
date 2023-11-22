@@ -119,24 +119,7 @@ if Code.ensure_loaded?(Config.Provider) do
 
         assert [
                  yggdrasil: [
-                   {
-                     MyApp.Namespace,
-                     [
-                       postgres: [
-                         username: "postgres_username",
-                         password: "postgres_password",
-                         database: "postgres_database",
-                         hostname: "localhost",
-                         port: 5432
-                       ],
-                       rabbitmq: [
-                         username: "rabbitmq_username",
-                         password: "rabbitmq_password",
-                         hostname: "localhost",
-                         port: 7652
-                       ]
-                     ]
-                   },
+                   {MyApp.Namespace, apps},
                    {
                      MyApp.OtherNamespace,
                      [
@@ -151,6 +134,21 @@ if Code.ensure_loaded?(Config.Provider) do
                    }
                  ]
                ] = Yaml.load([], path)
+
+        assert [
+                 username: "postgres_username",
+                 password: "postgres_password",
+                 database: "postgres_database",
+                 hostname: "localhost",
+                 port: 5432
+               ] = apps[:postgres]
+
+        assert [
+                 username: "rabbitmq_username",
+                 password: "rabbitmq_password",
+                 hostname: "localhost",
+                 port: 7652
+               ] = apps[:rabbitmq]
       end
 
       test "returns same config if the configuration is not found" do
