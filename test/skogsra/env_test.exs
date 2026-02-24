@@ -17,6 +17,16 @@ defmodule Skogsra.EnvTest do
       assert %Env{keys: [:key]} = Env.new(nil, :app, :key, [])
     end
 
+    test "converts all keys to atom" do
+      assert %Env{keys: [:one, :two, :three]} =
+               Env.new(nil, :app, ["one", "two", :three], [])
+    end
+
+    test "converts keys to module names" do
+      assert %Env{keys: [Enum, :map]} =
+               Env.new(nil, :app, ["Elixir.Enum", :map], [])
+    end
+
     test "sets namespace" do
       assert %Env{namespace: Test} = Env.new(nil, :app, :key, namespace: Test)
     end
