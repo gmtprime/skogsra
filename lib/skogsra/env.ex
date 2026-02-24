@@ -112,6 +112,7 @@ defmodule Skogsra.Env do
   def new(namespace, app_name, keys, options) when is_list(keys) do
     namespace = if is_nil(namespace), do: options[:namespace], else: namespace
     options = defaults(options)
+    keys = Enum.map(keys, &:"#{&1}")
 
     %Env{
       namespace: namespace,
