@@ -12,18 +12,12 @@ defmodule Skogsra.Mixfile do
       name: @name,
       app: @app,
       version: @version,
-      elixir: "~> 1.9",
+      elixir: "~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       dialyzer: dialyzer(),
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [
-        coveralls: :test,
-        "coveralls.detail": :test,
-        "coveralls.html": :test,
-        "coveralls.github": :test
-      ],
       package: package(),
       deps: deps(),
       docs: docs()
@@ -36,6 +30,17 @@ defmodule Skogsra.Mixfile do
   def application do
     [
       extra_applications: [:logger]
+    ]
+  end
+
+  def cli do
+    [
+      preferred_envs: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.html": :test,
+        "coveralls.github": :test
+      ]
     ]
   end
 

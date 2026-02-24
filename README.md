@@ -976,7 +976,7 @@ other files using the command `hab_load <extension>` e.g. loading
 ## Installation
 
 The package can be installed by adding `skogsra` to your list of dependencies
-in `mix.exs` (Elixir ≥ 1.11 and Erlang ≥ 22):
+in `mix.exs` (Elixir ≥ 1.15 and Erlang ≥ 22):
 
 ```elixir
 def deps do
