@@ -238,7 +238,7 @@ defmodule Skogsra.Env do
     bindings =
       options[:binding_order] || Application.get_env(:skogsra, :binding_order)
 
-    if is_bindings?(bindings) do
+    if has_bindings(bindings) do
       Keyword.put(options, :binding_order, bindings)
     else
       Keyword.put(options, :binding_order, default)
@@ -253,7 +253,7 @@ defmodule Skogsra.Env do
     bindings =
       options[:binding_skip] || Application.get_env(:skogsra, :binding_skip)
 
-    if is_bindings?(bindings) do
+    if has_bindings(bindings) do
       Keyword.put(options, :binding_skip, bindings)
     else
       Keyword.put(options, :binding_skip, default)
@@ -261,10 +261,10 @@ defmodule Skogsra.Env do
   end
 
   @doc false
-  @spec is_bindings?(term()) :: boolean()
-  def is_bindings?(other) when not is_list(other), do: false
+  @spec has_bindings(term()) :: boolean()
+  def has_bindings(other) when not is_list(other), do: false
 
-  def is_bindings?(bindings) do
+  def has_bindings(bindings) do
     Enum.all?(bindings, fn binding ->
       binding in [:system, :config] or Code.ensure_loaded?(binding)
     end)
