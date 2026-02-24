@@ -1,5 +1,14 @@
 # Changelog
 
+## Changelog for 2.5.1
+
+### Bugfix
+
+  * Properly cast  `app_env` keys to atoms. Now it's possible to avoid
+    circular dependencies between Skogsra config and other modules by allowing
+    keys as `"Elixir.MyApp.Endpoint"` to replace `MyApp.Endpoint`.
+  * Updated dependencies.
+
 ## Changelog for 2.5.0
 
 ### Enhancements
