@@ -1,5 +1,11 @@
 # Changelog
 
+## Changelog for 2.5.2
+
+### Bugfix
+
+  * When passing strings keys, dialyzer was failing.
+
 ## Changelog for 2.5.1
 
 ### Bugfix
