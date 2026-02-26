@@ -216,6 +216,9 @@ defmodule Skogsra do
      ```
   5. From the default value if it exists. In our example, `"password"`.
   """
+  @spec app_env(atom(), atom(), atom() | binary() | [any()]) :: Macro.t()
+  @spec app_env(atom(), atom(), atom() | binary() | [any()], keyword()) ::
+          Macro.t()
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   defmacro app_env(function_name, app_name, keys, options \\ []) do
     definition = String.to_atom("__#{function_name}__")

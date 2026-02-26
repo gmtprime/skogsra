@@ -101,18 +101,15 @@ defmodule Skogsra.Env do
   @doc """
   Creates a new `Skogsra` environment variable.
   """
-  @spec new(namespace(), app_name(), key(), options()) :: t()
-  @spec new(namespace(), app_name(), keys(), options()) :: t()
+  @spec new(namespace(), app_name(), atom() | binary() | [any()], options()) ::
+          t()
   def new(namespace, app_name, keys, options)
 
-  def new(namespace, app_name, key, options) when is_atom(key) do
-    new(namespace, app_name, [key], options)
-  end
-
-  def new(namespace, app_name, keys, options) when is_list(keys) do
+  def new(namespace, app_name, keys, options)
+      when is_list(keys) do
     namespace = if is_nil(namespace), do: options[:namespace], else: namespace
     options = defaults(options)
-    keys = Enum.map(keys, &:"#{&1}")
+    keys = cast_keys(keys)
 
     %Env{
       namespace: namespace,
@@ -120,6 +117,12 @@ defmodule Skogsra.Env do
       keys: keys,
       options: options
     }
+  end
+
+  def new(namespace, app_name, key, options)
+      when is_atom(key)
+      when is_binary(key) do
+    new(namespace, app_name, [key], options)
   end
 
   @doc """
@@ -219,6 +222,32 @@ defmodule Skogsra.Env do
 
   #########
   # Helpers
+
+  @spec cast_keys([any()]) :: keys()
+  defp cast_keys(keys)
+
+  defp cast_keys(keys) when is_list(keys) do
+    keys
+    |> Stream.map(&cast_key/1)
+    |> Enum.reject(&is_nil/1)
+  end
+
+  @spec cast_key(any()) :: nil | key()
+  defp cast_key(key)
+
+  defp cast_key(key) when is_atom(key) do
+    key
+  end
+
+  defp cast_key(key) when is_binary(key) do
+    String.to_atom(key)
+  rescue
+    _ -> nil
+  end
+
+  defp cast_key(_key) do
+    nil
+  end
 
   @doc false
   @spec defaults(options()) :: options()
