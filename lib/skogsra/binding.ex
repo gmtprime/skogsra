@@ -46,6 +46,11 @@ defmodule Skogsra.Binding do
       cast(module, env, value)
     else
       {:error, reason} ->
+        reason = """
+        Cannot get environment variable #{inspect(env)} due to #{inspect(reason)}
+        Module: #{inspect(module)})
+        """
+
         Logger.warning(reason)
         nil
 

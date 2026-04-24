@@ -1,5 +1,12 @@
 # Changelog
 
+## Changelog for 2.5.3
+
+### Bugfix
+
+  * When geting an unexisting envinronment variable using a custom binding module,
+    `Logger` was raising a warning.
+
 ## Changelog for 2.5.2
 
 ### Bugfix
